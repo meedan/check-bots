@@ -1,0 +1,14 @@
+const config = {
+  exif: {
+    checkApiUrl: 'https://checkmedia.org',
+    checkApiAccessToken: 'get one on admin UI when a bot is created',
+    checkApiTeamSlug: 'team-slug'
+  },
+  youtube: {
+    checkApiUrl: 'https://checkmedia.org',
+    checkApiAccessToken: 'get one on admin UI when a bot is created',
+    checkApiTeamSlug: 'team-slug',
+    youtubeKey: 'a YouTube key'
+  }
+};
+module.exports = config;

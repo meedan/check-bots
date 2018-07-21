@@ -1,0 +1,23 @@
+{
+  "name": "check-bots",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.2",
+    "exif": "^0.6.0",
+    "get-json": "^1.0.0",
+    "html-entities": "^1.2.1",
+    "lokka": "^1.7.0",
+    "lokka-transport-http": "^1.6.1",
+    "request": "^2.87.0",
+    "util": "^0.11.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo 'No tests'",
+    "build": "rm -f check-api-bots.zip && zip -r check-api-bots.zip * && echo 'Now upload check-api-bots.zip to AWS Lambda'"
+  },
+  "author": "Meedan",
+  "license": "ISC"
+}
