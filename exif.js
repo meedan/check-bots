@@ -7,7 +7,7 @@ const Lokka = require('lokka').Lokka,
 
 // Send a mutation to Check API
 
-const replyToCheck = (pmid, title, description, image_url, callback) => {
+const replyToCheck = (pmid, title, description, image_url, team_slug, callback) => {
   const setFields = JSON.stringify({
     team_bot_response_formatted_data: JSON.stringify({
       title,
@@ -34,7 +34,7 @@ const replyToCheck = (pmid, title, description, image_url, callback) => {
     'X-Check-Token': config.checkApiAccessToken
   };
 
-  const transport = new Transport(config.checkApiUrl + '/api/graphql?team=' + config.checkApiTeamSlug, { headers, credentials: false, timeout: 120000 });
+  const transport = new Transport(config.checkApiUrl + '/api/graphql?team=' + team_slug, { headers, credentials: false, timeout: 120000 });
   const client = new Lokka({ transport });
 
   client.mutate(mutationQuery, vars)
@@ -48,7 +48,7 @@ const replyToCheck = (pmid, title, description, image_url, callback) => {
   });
 };
 
-const main = (image_url, pmid, callback) => {
+const main = (image_url, pmid, team_slug, callback) => {
   request({ uri: image_url, encoding: null }, (err, resp, buffer) => {
     if (!err) {
       try {
@@ -62,7 +62,7 @@ const main = (image_url, pmid, callback) => {
               'See full EXIF information at http://metapicz.com/#landing?imgsrc=' + image_url
             ].join("\n");
             console.log('Sending to Check: ' + util.inspect(message));
-            replyToCheck(pmid, 'EXIF Data', message, null, callback);
+            replyToCheck(pmid, 'EXIF Data', message, null, team_slug, callback);
           }
           else {
             console.log('Error on reading EXIF data: ' + e.message);
@@ -86,8 +86,9 @@ exports.handler = (event, context, callback) => {
   if (data.event === 'create_project_media' && data.data.report_type === 'uploadedimage') {
     const image_url = data.data.media.picture.replace(/^https?:\/\/[^\/]+/, config.checkApiUrl);
     const pmid = data.data.dbid.toString();
-    if (image_url && pmid) {
-      main(image_url, pmid, callback);
+    const team_slug = data.team.slug;
+    if (image_url && pmid && team_slug) {
+      main(image_url, pmid, team_slug, callback);
     }
     else {
       callback(null);

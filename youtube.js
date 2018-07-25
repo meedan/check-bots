@@ -53,7 +53,7 @@ const getReverseImageResult = (image_url, callback) => {
 
 // Send a mutation to Check API
 
-const replyToCheck = (pmid, title, description, image_url, callback) => {
+const replyToCheck = (pmid, title, description, image_url, team_slug, callback) => {
   const setFields = JSON.stringify({
     team_bot_response_formatted_data: JSON.stringify({
       title,
@@ -80,7 +80,7 @@ const replyToCheck = (pmid, title, description, image_url, callback) => {
     'X-Check-Token': config.checkApiAccessToken
   };
 
-  const transport = new Transport(config.checkApiUrl + '/api/graphql?team=' + config.checkApiTeamSlug, { headers, credentials: false, timeout: 120000 });
+  const transport = new Transport(config.checkApiUrl + '/api/graphql?team=' + team_slug, { headers, credentials: false, timeout: 120000 });
   const client = new Lokka({ transport });
 
   client.mutate(mutationQuery, vars)
@@ -94,7 +94,7 @@ const replyToCheck = (pmid, title, description, image_url, callback) => {
   });
 };
 
-const main = (url, pmid, callback) => { 
+const main = (url, pmid, team_slug, callback) => { 
   if (!url) {
     console.log('Please pass a YouTube URL');
     callback(null);
@@ -119,20 +119,20 @@ const main = (url, pmid, callback) => {
       if (typeof response.items[0]['recordingDetails']['location'] != 'undefined') {
         const lat = response.items[0]['recordingDetails']['location']['latitude'];
         const lon = response.items[0]['recordingDetails']['location']['longitude'];
-        replyToCheck(pmid, 'YouTube Geolocation', 'View on a map the location of this video: https://www.google.com/maps/search/' + lat + ',+' + lon + '.', null, callback);
+        replyToCheck(pmid, 'YouTube Geolocation', 'View on a map the location of this video: https://www.google.com/maps/search/' + lat + ',+' + lon + '.', null, team_slug, callback);
       }
     }
-    replyToCheck(pmid, 'YouTube Timestamp', timestampMsg, null, callback);
+    replyToCheck(pmid, 'YouTube Timestamp', timestampMsg, null, team_slug, callback);
     for (let i=0; i < 4; i++) {
       const prefix = i > 0 ? 'hq' : '';
       const image_src = 'http://img.youtube.com/vi/' + response.items[0]['id'] + '/' + prefix + i + '.jpg';
       const reverse_image_url = 'https://www.google.com/searchbyimage?image_url=' + image_src;
       getReverseImageResult(image_src, (reverse_image_result) => {
         if (reverse_image_result) {
-          replyToCheck(pmid, 'YouTube Thumbnail', 'Reverse image search result for this image: ' + reverse_image_result + '. More results at: ' + reverse_image_url + '.', image_src, callback);
+          replyToCheck(pmid, 'YouTube Thumbnail', 'Reverse image search result for this image: ' + reverse_image_result + '. More results at: ' + reverse_image_url + '.', image_src, team_slug, callback);
         }
         else {
-          replyToCheck(pmid, 'YouTube Thumbnail', 'No reverse image search results for this image for now. You can try again at: ' + reverse_image_url + '.', image_src, callback);
+          replyToCheck(pmid, 'YouTube Thumbnail', 'No reverse image search results for this image for now. You can try again at: ' + reverse_image_url + '.', image_src, team_slug, callback);
         }
       });
     }
@@ -144,7 +144,7 @@ exports.handler = (event, context, callback) => {
   if (data.event === 'create_project_media') {
     const url = data.data.media.url;
     const pmid = data.data.dbid.toString();
-    main(url, pmid, callback);
+    main(url, pmid, data.team.slug, callback);
   }
   else {
     callback(null);
