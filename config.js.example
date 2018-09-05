@@ -1,7 +1,8 @@
 const config = {
   exif: {
     checkApiUrl: 'https://checkmedia.org',
-    checkApiAccessToken: 'get one on admin UI when a bot is created'
+    checkApiAccessToken: 'get one on admin UI when a bot is created',
+    opencageKey: 'an OpenCage key'
   },
   youtube: {
     checkApiUrl: 'https://checkmedia.org',

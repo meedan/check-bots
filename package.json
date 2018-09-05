@@ -10,6 +10,7 @@
     "html-entities": "^1.2.1",
     "lokka": "^1.7.0",
     "lokka-transport-http": "^1.6.1",
+    "node-geocoder": "^3.22.0",
     "request": "^2.87.0",
     "util": "^0.11.0"
   },
