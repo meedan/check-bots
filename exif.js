@@ -83,18 +83,19 @@ const addSuggestion = (coordinates, task_id, task_type, task_dbid, name, team_sl
   replyToCheck(mutationQuery, vars, team_slug, callback);
 };
 
-const main = (image_url, pmid, team_slug, callback) => {
+const main = (image_url, pmid, team_slug, settings, callback) => {
   request({ uri: image_url, encoding: null }, (err, resp, buffer) => {
     if (!err) {
       try {
         new ExifImage({ image: buffer }, (error, metadata) => {
           if (!error) {
+            const link = settings.link || 'http://metapicz.com/#landing?imgsrc={URL}'
             const message = [
               '• Make: ' + metadata.image.Make,
               '• Model: ' + metadata.image.Model,
               '• Software: ' + metadata.image.Software,
               '• Date: ' + metadata.exif.DateTimeOriginal,
-              'See full EXIF information at http://metapicz.com/#landing?imgsrc=' + image_url
+              'See full EXIF information at ' + link.replace('{URL}', image_url)
             ].join("\n");
             console.log('Sending to Check: ' + util.inspect(message));
             addComment(pmid, 'EXIF Data', message, null, team_slug, callback);
@@ -199,8 +200,10 @@ exports.handler = (event, context, callback) => {
     const image_url = data.data.media.picture.replace(/^https?:\/\/[^\/]+/, config.checkApiUrl);
     const pmid = data.data.dbid.toString();
     const team_slug = data.team.slug;
+    let settings = data.settings || '{}';
+    settings = JSON.parse(settings);
     if (image_url && pmid && team_slug) {
-      main(image_url, pmid, team_slug, callback);
+      main(image_url, pmid, team_slug, settings, callback);
     }
     else {
       callback(null);
@@ -212,7 +215,8 @@ exports.handler = (event, context, callback) => {
     const task_dbid = data.data.dbid.toString();
     const task_type = JSON.parse(data.data.content)['type'];
     const team_slug = data.team.slug;
-    if (image_url && task_id && task_type && team_slug) {
+    const suggestions_count = parseInt(JSON.parse(data.data.content)['suggestions_count']);
+    if (image_url && task_id && task_type && team_slug && !suggestions_count) {
       suggest(image_url, task_id, task_type, task_dbid, team_slug, callback);
     }
     else {
