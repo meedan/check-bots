@@ -8,6 +8,11 @@ const config = {
     checkApiUrl: 'https://checkmedia.org',
     checkApiAccessToken: 'get one on admin UI when a bot is created',
     youtubeKey: 'a YouTube key'
+  },
+  similarity: {
+    alegreUrl: 'https://alegre.speakbridge.io',
+    checkApiUrl: 'https://check-api-qa.checkmedia.org',
+    checkApiAccessToken: 'get one on admin UI when a bot is created',
   }
 };
 module.exports = config;
