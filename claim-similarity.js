@@ -72,7 +72,7 @@ const storeClaimInAlegre = (claim, id, pmid, pid, team, callback) => {
   const failureCallback = (error) => {
     replyToCheck(pmid, 'Claim NOT sent to Alegre', "Sorry, I could not send this claim to Alegre's similarity index. Please contact the support.", team.slug, callback);
   };
-  sendRequestToAlegre('similarity/', { text: claim, context: { team_id: team.dbid, project_id: pid, project_media_id: pmid, project_media_graphql_id: id } }, successCallback, failureCallback);
+  sendRequestToAlegre('similarity/', { text: claim, type: 'wordvec', context: { team_id: team.dbid, project_id: pid, project_media_id: pmid, project_media_graphql_id: id } }, successCallback, failureCallback);
 };
 
 const createRelationshipsOnCheck = (claim, id, pmid, pid, team, callback) => {
@@ -134,7 +134,7 @@ const main = (claim, id, pmid, pid, team, callback) => {
   };
   const failureCallback = (error) => {
   };
-  sendRequestToAlegre('similarity/query', { text: claim, context: { project_id: pid } }, successCallback, failureCallback);
+  sendRequestToAlegre('similarity/query', { text: claim, type: 'wordvec', context: { project_id: pid } }, successCallback, failureCallback);
 };
 
 exports.handler = (event, context, callback) => {
