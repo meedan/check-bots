@@ -194,6 +194,17 @@ const suggest = (image_url, task_id, task_type, task_dbid, team_slug, callback) 
   });
 };
 
+const assignedToCammie = (data) => {
+  let assigned = false;
+  const edges = data.data.assignments.edges;
+  for (let i = 0; i < edges.length; i++) {
+    if (!assigned && edges[i].node.name === 'Cammie the EXIF Bot') {
+      assigned = true;
+    }
+  }
+  return assigned;
+};
+
 exports.handler = (event, context, callback) => {
   const data = JSON.parse(event.body);
   if (data.event === 'create_project_media' && data.data.report_type === 'uploadedimage') {
@@ -209,7 +220,7 @@ exports.handler = (event, context, callback) => {
       callback(null);
     }
   }
-  else if ((data.event === 'update_annotation_task_geolocation' || data.event === 'create_annotation_task_geolocation') && data.data.project_media.report_type === 'uploadedimage' && data.data.assigned_to && data.data.assigned_to.name === 'Cammie the EXIF Bot') {
+  else if ((data.event === 'update_annotation_task_geolocation' || data.event === 'create_annotation_task_geolocation') && data.data.project_media.report_type === 'uploadedimage' && assignedToCammie(data)) {
     const image_url = data.data.project_media.media.picture.replace(/^https?:\/\/[^\/]+/, config.checkApiUrl);
     const task_id = data.data.id.toString();
     const task_dbid = data.data.dbid.toString();
