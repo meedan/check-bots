@@ -5,7 +5,7 @@ const Lokka = require('lokka').Lokka,
       ExifImage = require('exif').ExifImage,
       Transport = require('lokka-transport-http').Transport,
       NodeGeocoder = require('node-geocoder');
- 
+
 const options = { provider: 'opencage', apiKey: config.opencageKey };
 const geocoder = NodeGeocoder(options);
 
@@ -91,10 +91,10 @@ const main = (image_url, pmid, team_slug, settings, callback) => {
           if (!error) {
             const link = settings.link || 'http://metapicz.com/#landing?imgsrc={URL}'
             const message = [
-              '• Make: ' + metadata.image.Make,
-              '• Model: ' + metadata.image.Model,
-              '• Software: ' + metadata.image.Software,
-              '• Date: ' + metadata.exif.DateTimeOriginal,
+              '• Make: ' + (metadata.image.Make || 'Not found'),
+              '• Model: ' + (metadata.image.Model || 'Not found'),
+              '• Software: ' + (metadata.image.Software || 'Not found'),
+              '• Date: ' + (metadata.exif.DateTimeOriginal || 'Not found'),
               'See full EXIF information at ' + link.replace('{URL}', image_url)
             ].join("\n");
             console.log('Sending to Check: ' + util.inspect(message));
