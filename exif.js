@@ -101,7 +101,7 @@ const main = (image_url, pmid, team_slug, settings, callback) => {
             addComment(pmid, 'EXIF Data', message, null, team_slug, callback);
           }
           else {
-            console.log('Error on reading EXIF data: ' + e.message);
+            console.log('Error on reading EXIF data: ' + error.message);
             callback(null);
           }
         });
