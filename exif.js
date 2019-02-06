@@ -27,7 +27,7 @@ const replyToCheck = (mutationQuery, vars, team_slug, callback) => {
     callback(null);
   })
   .catch(function(e) {
-    console.log('Error when executing mutation: ' + util.inspect(e));
+    console.error('Error when executing mutation: ' + util.inspect(e));
     callback(null);
   });
 };
@@ -84,36 +84,44 @@ const addSuggestion = (coordinates, task_id, task_type, task_dbid, name, team_sl
 };
 
 const main = (image_url, pmid, team_slug, settings, callback) => {
+  let make = 'Not found',
+      model = 'Not found',
+      software = 'Not found',
+      date = 'Not found';
+
   request({ uri: image_url, encoding: null }, (err, resp, buffer) => {
     if (!err) {
       try {
         new ExifImage({ image: buffer }, (error, metadata) => {
           if (!error) {
-            const link = settings.link || 'http://metapicz.com/#landing?imgsrc={URL}'
-            const message = [
-              '• Make: ' + (metadata.image.Make || 'Not found'),
-              '• Model: ' + (metadata.image.Model || 'Not found'),
-              '• Software: ' + (metadata.image.Software || 'Not found'),
-              '• Date: ' + (metadata.exif.DateTimeOriginal || 'Not found'),
-              'See full EXIF information at ' + link.replace('{URL}', image_url)
-            ].join("\n");
-            console.log('Sending to Check: ' + util.inspect(message));
-            addComment(pmid, 'EXIF Data', message, null, team_slug, callback);
+            make = metadata.image.Make;
+            model = metadata.image.Model;
+            software = metadata.image.Software;
+            date = metadata.exif.DateTimeOriginal;
           }
           else {
-            console.log('Error on reading EXIF data: ' + error.message);
-            callback(null);
+            console.error('Error on reading EXIF data: ' + error.message);
           }
         });
       } catch(error) {
-        console.log('Error: ' + error.message);
-        callback(null);
+        console.error('Exception on reading EXIF data: ' + error.message);
       }
     }
     else {
-      console.log('Error on getting remote image: ' + util.inspect(err));
-      callback(null);
+      console.error('Error on getting remote image: ' + util.inspect(err));
     }
+
+    // Send reply in all cases.
+    const link = settings.link || 'http://metapicz.com/#landing?imgsrc={URL}'
+    const message = [
+      '• Make: ' + make,
+      '• Model: ' + model,
+      '• Software: ' + software,
+      '• Date: ' + date,
+      'See full EXIF information at ' + link.replace('{URL}', image_url)
+    ].join("\n");
+    console.log('Sending to Check: ' + util.inspect(message));
+    addComment(pmid, 'EXIF Data', message, null, team_slug, callback);
   });
 };
 
@@ -178,17 +186,17 @@ const suggest = (image_url, task_id, task_type, task_dbid, team_slug, callback) 
             }
           }
           else {
-            console.log('Error on reading EXIF data: ' + e.message);
+            console.error('Error on reading EXIF data: ' + error.message);
             callback(null);
           }
         });
       } catch(error) {
-        console.log('Error: ' + error.message);
+        console.error('Exception on reading EXIF data: ' + error.message);
         callback(null);
       }
     }
     else {
-      console.log('Error on getting remote image: ' + util.inspect(err));
+      console.error('Error on getting remote image: ' + util.inspect(err));
       callback(null);
     }
   });
