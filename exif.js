@@ -10,7 +10,6 @@ const options = { provider: 'opencage', apiKey: config.opencageKey };
 const geocoder = NodeGeocoder(options);
 
 // Send a mutation to Check API
-
 const replyToCheck = (mutationQuery, vars, team_slug, callback) => {
   const headers = {
     'X-Check-Token': config.checkApiAccessToken
@@ -21,7 +20,7 @@ const replyToCheck = (mutationQuery, vars, team_slug, callback) => {
   const transport = new Transport(config.checkApiUrl + '/api/graphql?team=' + team_slug, { headers, credentials: false, timeout: 120000 });
   const client = new Lokka({ transport });
 
-  client.mutate(mutationQuery, vars)
+  return client.mutate(mutationQuery, vars)
   .then(function(resp, err) {
     console.log('Response: ' + util.inspect(resp));
     callback(null);
@@ -54,13 +53,16 @@ const addComment = (pmid, title, description, image_url, team_slug, callback) =>
     }
   }`;
 
-  replyToCheck(mutationQuery, vars, team_slug, callback);
+  return replyToCheck(mutationQuery, vars, team_slug, callback);
 };
 
-const addSuggestion = (coordinates, task_id, task_type, task_dbid, name, team_slug, callback) => {
+const addSuggestion = (geojson, task_id, task_type, task_dbid, team_slug, callback) => {
   const setFields = {};
   setFields[`task_${task_type}`] = task_dbid.toString();
-  setFields[`suggestion_${task_type}`] = JSON.stringify({ suggestion: convertToGeoJSON(coordinates, name), comment: `According to the EXIF information in this image, this seems to be located at ${name}: http://www.google.com/maps/place/${coordinates[0]},${coordinates[1]}` });
+  setFields[`suggestion_${task_type}`] = JSON.stringify({
+    suggestion: JSON.stringify(geojson),
+    comment: `According to the EXIF information in this image, this seems to be located at ${geojson.properties.name}: http://www.google.com/maps/place/${geojson.geometry.coordinates[0]},${geojson.geometry.coordinates[1]}`
+  });
 
   const response = JSON.stringify({
     annotation_type: `task_response_${task_type}`,
@@ -80,56 +82,79 @@ const addSuggestion = (coordinates, task_id, task_type, task_dbid, name, team_sl
     }
   }`;
 
-  replyToCheck(mutationQuery, vars, team_slug, callback);
+  return replyToCheck(mutationQuery, vars, team_slug, callback);
 };
 
-const main = (image_url, pmid, team_slug, settings, callback) => {
-  let make = 'Not found',
-      model = 'Not found',
-      software = 'Not found',
-      date = 'Not found';
-
-  request({ uri: image_url, encoding: null }, (err, resp, buffer) => {
-    if (!err) {
-      try {
-        new ExifImage({ image: buffer }, (error, metadata) => {
-          if (!error) {
-            make = metadata.image.Make;
-            model = metadata.image.Model;
-            software = metadata.image.Software;
-            date = metadata.exif.DateTimeOriginal;
-          }
-          else {
-            console.error('Error on reading EXIF data: ' + error.message);
-          }
-        });
-      } catch(error) {
-        console.error('Exception on reading EXIF data: ' + error.message);
+const loadImage = function(image_url) {
+  return new Promise(function(resolve, reject) {
+    request({ uri: image_url, encoding: null }, (err, resp, buffer) => {
+      if (!err) {
+        resolve(buffer);
       }
-    }
-    else {
-      console.error('Error on getting remote image: ' + util.inspect(err));
-    }
-
-    // Send reply in all cases.
-    const link = settings.link || 'http://metapicz.com/#landing?imgsrc={URL}'
-    const message = [
-      '• Make: ' + make,
-      '• Model: ' + model,
-      '• Software: ' + software,
-      '• Date: ' + date,
-      'See full EXIF information at ' + link.replace('{URL}', image_url)
-    ].join("\n");
-    console.log('Sending to Check: ' + util.inspect(message));
-    addComment(pmid, 'EXIF Data', message, null, team_slug, callback);
+      else {
+        reject(new Error('Error on getting remote image: ' + util.inspect(err)));
+      }
+    });
   });
+}
+
+const getExif = function(image) {
+  return new Promise(function(resolve, reject) {
+    new ExifImage({ image }, (error, metadata) => {
+      if (!error) {
+        resolve(metadata);
+      }
+      else {
+        reject(new Error('Error on reading EXIF data: ' + error.message));
+      }
+    });
+  });
+}
+
+exports.getMetadata = function(image_url) {
+  const empty = {
+    make: 'Not found',
+    model: 'Not found',
+    software: 'Not found',
+    date: 'Not found'
+  };
+  return loadImage(image_url).then(function(image) {
+    return getExif(image);
+  }, function(error) {
+    console.error(error.message);
+    return null;
+  }).then(function(metadata) {
+    return metadata ? Object.assign({}, empty, {
+      make: metadata.image.Make,
+      model: metadata.image.Model,
+      software: metadata.image.Software,
+      date: metadata.exif.DateTimeOriginal
+    }) : empty;
+  }, function(error) {
+    console.error(error.message);
+    return empty;
+  });
+}
+
+const main = async (image_url, pmid, team_slug, settings, callback) => {
+  const metadata = await exports.getMetadata(image_url);
+  const link = settings.link || 'http://metapicz.com/#landing?imgsrc={URL}'
+  const message = [
+    '• Make: ' + metadata.make,
+    '• Model: ' + metadata.model,
+    '• Software: ' + metadata.software,
+    '• Date: ' + metadata.date,
+    'See full EXIF information at ' + link.replace('{URL}', image_url)
+  ].join("\n");
+  console.log('Sending EXIF metadata to Check: ' + util.inspect(message));
+  await addComment(pmid, 'EXIF Data', message, null, team_slug, callback);
 };
 
 const parseDMS = (input) => {
   const parts = input.split(' ');
   const lat = convertDMSToDD(parts[0], parts[1], parts[2], parts[3]);
-  const lng = convertDMSToDD(parts[4], parts[5], parts[6], parts[7]);
-  return [lat, lng];
+  const lon = convertDMSToDD(parts[4], parts[5], parts[6], parts[7]);
+  return [lat, lon];
 };
 
 const convertDMSToDD = (degrees, minutes, seconds, direction) => {
@@ -141,7 +166,7 @@ const convertDMSToDD = (degrees, minutes, seconds, direction) => {
 };
 
 const convertToGeoJSON = (coordinates, name) => {
-  const geojson = JSON.stringify({
+  return {
     type: 'Feature',
     geometry: {
       type: 'Point',
@@ -150,56 +175,51 @@ const convertToGeoJSON = (coordinates, name) => {
     properties: {
       name
     }
-  });
-  return geojson;
+  };
 };
 
-const suggest = (image_url, task_id, task_type, task_dbid, team_slug, callback) => {
-  request({ uri: image_url, encoding: null }, (err, resp, buffer) => {
-    if (!err) {
-      try {
-        new ExifImage({ image: buffer }, (error, metadata) => {
-          if (!error) {
-            const { gps } = metadata;
-            if (gps) {
-              const lat = `${gps.GPSLatitude.join(' ')} ${gps.GPSLatitudeRef}`;
-              const lon = `${gps.GPSLongitude.join(' ')} ${gps.GPSLongitudeRef}`;
-              const coordinates = parseDMS(lat + ' ' + lon);
-              geocoder.reverse({ lat, lon }, function(err, res) {
-                let name = null;
-                if (!err) {
-                  let names = [];
-                  const parts = [res[0].city, res[0].state, res[0].country];
-                  for (let i = 0; i < parts.length; i++) {
-                    const part = parts[i];
-                    if (part) {
-                      names.push(part);
-                    }
-                  }
-                  name = names.join(', ');
-                }
-                if (!name) {
-                  name = 'No name';
-                }
-                addSuggestion(coordinates, task_id, task_type, task_dbid, name, team_slug, callback);
-              });
-            }
-          }
-          else {
-            console.error('Error on reading EXIF data: ' + error.message);
-            callback(null);
-          }
-        });
-      } catch(error) {
-        console.error('Exception on reading EXIF data: ' + error.message);
-        callback(null);
+const getGeocode = (lat, lon) => {
+  const coordinates = parseDMS(lat + ' ' + lon);
+  return new Promise((resolve, reject) => {
+    geocoder.reverse({ lat, lon }, (err, res) => {
+      if (!err) {
+        const name = [res[0].city, res[0].state, res[0].country]
+          .filter(x => !!x)
+          .join(', ');
+        resolve(convertToGeoJSON(coordinates, name));
       }
-    }
-    else {
-      console.error('Error on getting remote image: ' + util.inspect(err));
-      callback(null);
-    }
+      else {
+        console.error('Geocoding error: ' + err);
+        resolve(convertToGeoJSON(coordinates, 'No location name found'));
+      }
+    });
   });
+}
+
+exports.getGeolocation = (image_url) => {
+  return loadImage(image_url).then((image) => {
+    return getExif(image);
+  }, (error) => {
+    console.error(error.message);
+    throw error;
+  }).then((metadata) => {
+    const { gps } = metadata;
+    if (!gps || !Object.keys(gps).length) throw(new Error('No GPS information found'));
+    const lat = `${gps.GPSLatitude.join(' ')} ${gps.GPSLatitudeRef}`;
+    const lon = `${gps.GPSLongitude.join(' ')} ${gps.GPSLongitudeRef}`;
+    return getGeocode(lat, lon);
+  }, (error) => {
+    console.error(error.message);
+    throw error;
+  });
+}
+
+const suggest = async (image_url, task_id, task_type, task_dbid, team_slug, callback) => {
+  const geojson = await exports.getGeolocation(image_url).catch(function(e) {
+    // TODO send error reply.
+  });
+  console.log('Sending GeoJSON suggestion to Check: ' + util.inspect(geojson));
+  await addSuggestion(geojson, task_id, task_type, task_dbid, team_slug, callback);
 };
 
 const assignedToCammie = (data) => {
@@ -213,7 +233,7 @@ const assignedToCammie = (data) => {
   return assigned;
 };
 
-exports.handler = (event, context, callback) => {
+exports.handler = async (event, context, callback) => {
   const data = JSON.parse(event.body);
   if (data.event === 'create_project_media' && data.data.report_type === 'uploadedimage') {
     const image_url = data.data.media.picture.replace(/^https?:\/\/[^\/]+/, config.checkApiUrl);
@@ -222,7 +242,7 @@ exports.handler = (event, context, callback) => {
     let settings = data.settings || '{}';
     settings = JSON.parse(settings);
     if (image_url && pmid && team_slug) {
-      main(image_url, pmid, team_slug, settings, callback);
+      await main(image_url, pmid, team_slug, settings, callback);
     }
     else {
       callback(null);
@@ -236,7 +256,7 @@ exports.handler = (event, context, callback) => {
     const team_slug = data.team.slug;
     const suggestions_count = parseInt(JSON.parse(data.data.content)['suggestions_count']);
     if (image_url && task_id && task_type && team_slug && !suggestions_count) {
-      suggest(image_url, task_id, task_type, task_dbid, team_slug, callback);
+      await suggest(image_url, task_id, task_type, task_dbid, team_slug, callback);
     }
     else {
       callback(null);
@@ -246,3 +266,29 @@ exports.handler = (event, context, callback) => {
     callback(null);
   }
 };
+
+const isLambda = !!((process.env.LAMBDA_TASK_ROOT && process.env.AWS_EXECUTION_ENV) || false);
+const isTesting = typeof global.it === 'function';
+if (isLambda) {
+  // AWS Lambda: do nothing.
+} else if (isTesting) {
+  // Testing: do nothing.
+} else {
+  // Local or elsewhere: listen manually.
+  const express = require('express');
+  const bodyParser = require('body-parser');
+  const app = express();
+  const port = process.env.PORT || 0xb001;
+  app.use(bodyParser.json()); // for parsing application/json
+  app.post('/', (req, res) => {
+    console.log(req.body);
+    req.body = JSON.stringify(req.body); // because the handler will try to parse it again
+    exports.handler(req, null, () => {}).then(() => {
+      res.end();
+    }, (error) => {
+      console.error(error.message);
+      res.status(500).end();
+    });
+  });
+  app.listen(port, () => console.log(`EXIF bot listening on port ${port}...`));
+}

@@ -4,7 +4,7 @@ A collection of bots that can be connected to [Check API](https://github.com/mee
 
 ## Bots
 
-We currently have three bots here.
+We currently have two bots here.
 
 ### 1. YouTube Data Bot
 
@@ -20,10 +20,6 @@ All those results are sent to Check as annotations.
 
 This bot is at `exif.js`. It listens to the `create_project_media` event and, if it's an uploaded media, it extracts EXIF data and
 posts to Check as an annotation, with a link for the full report.
-
-### 3. Similarity Bot
-
-This bot is at `claim-similarity.js`. It listens to the the `create_project_media` event and, if it's a claim, it stores in Alegre's similarity index and related to another existing claim on Check if they are similar.
 
 ## Usage
 

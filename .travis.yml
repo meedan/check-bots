@@ -1,0 +1,10 @@
+language: node_js
+node_js:
+- "node"
+cache: npm
+before_install:
+- git clone https://${TOKEN}:x-oauth-basic@github.com/meedan/configurator ./configurator
+- d=configurator/check-api-bots/travis/; for f in $(find $d -type f); do cp "$f" "${f/$d/}"; done
+notifications:
+  slack:
+    secure: EB6npc5OJOCurE/c1Tqo9+4smMNgM6JEKennHBvwxZZ3QTvDpjGWqmzrBESWrU7zSbEkXL7JscUSFuaMWkgwfTegbP1Nw98DwVDKK50dufmYQlyzWYpsdqtdAF+MdgGjmYRkR3UITW2jrwlVTUQiSNV1aq1mJ116g2zu3VqoQc61IouUYCw7pjXgbbQFHGFmfDGVbMBxombbySgxcRoSbxxLkGh7+33Qi4EvPDz8s0OznKQOtxESmmUc+9Z9UjSvt/LncgtyADNUSGCryXTqU0APh2M/vcAhSbR+eSx/O58VE8+guADyjnbuqsoDcjV3uNbtiipe62AAuR/Hbsn8UZfYRG4vDztwq772vGnwI7nYiyldT8faVwaeOl5qdInd0V27SnJ1T8sk36O0scYUJ0xJvNpWq4dloqhnCytJqIPbLIFXHm1jBEsGPv2UkfWvO91Y8mnVY2/OPldqIiN/VgIJcdSMloXowCcyHFMyd3WfOzV8ppY3KHnBsBxnVc6HbIwZQcJSfZd7UW8o9Czu7CVrkppzrD2VSkWLLUxcRZXqtd4BNRefi0PGmVN+PE993+8vSFvhYKpICNK7R9Y3DuXezQiAG+h90+qIZ7FXkVBJEB23gSBYTyZh0mkD7MSYM71BZ55WFmsedWk8M3GVSTGAMnbwoOP35rB40J4pGOc=

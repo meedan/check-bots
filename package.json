@@ -4,8 +4,10 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
+    "body-parser": "^1.18.3",
     "cheerio": "^1.0.0-rc.2",
     "exif": "^0.6.0",
+    "express": "^4.16.4",
     "get-json": "^1.0.0",
     "html-entities": "^1.2.1",
     "lokka": "^1.7.0",
@@ -14,10 +16,16 @@
     "request": "^2.87.0",
     "util": "^0.11.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "http-server": "^0.11.1",
+    "mocha": "^6.0.1"
+  },
   "scripts": {
-    "test": "echo 'No tests'",
-    "build": "rm -f check-api-bots.zip && zip -r check-api-bots.zip * && echo 'Now upload check-api-bots.zip to AWS Lambda'"
+    "pretest": "http-server -p 7777 test &",
+    "test": "mocha || :",
+    "posttest": "pkill -f http-server",
+    "build": "rm -f check-api-bots.zip && zip -9 -r --exclude=*configurator* --exclude=*test* check-api-bots.zip * && echo 'Now upload check-api-bots.zip to AWS Lambda'",
+    "exif": "node exif.js"
   },
   "author": "Meedan",
   "license": "ISC"
