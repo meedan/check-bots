@@ -26,7 +26,7 @@ const replyToCheck = (mutationQuery, vars, team_slug, callback) => {
     callback(null);
   })
   .catch(function(e) {
-    console.error('Error when executing mutation: ' + util.inspect(e));
+    console.error('Error sending response: ' + util.inspect(e));
     callback(null);
   });
 };
@@ -56,13 +56,10 @@ const addComment = (pmid, title, description, image_url, team_slug, callback) =>
   return replyToCheck(mutationQuery, vars, team_slug, callback);
 };
 
-const addSuggestion = (geojson, task_id, task_type, task_dbid, team_slug, callback) => {
+const addResponse = (geojson, task_id, task_type, task_dbid, team_slug, callback) => {
   const setFields = {};
   setFields[`task_${task_type}`] = task_dbid.toString();
-  setFields[`suggestion_${task_type}`] = JSON.stringify({
-    suggestion: JSON.stringify(geojson),
-    comment: `According to the EXIF information in this image, this seems to be located at ${geojson.properties.name}: http://www.google.com/maps/place/${geojson.geometry.coordinates[0]},${geojson.geometry.coordinates[1]}`
-  });
+  setFields[`response_${task_type}`] = JSON.stringify(geojson);
 
   const response = JSON.stringify({
     annotation_type: `task_response_${task_type}`,
@@ -77,7 +74,7 @@ const addSuggestion = (geojson, task_id, task_type, task_dbid, team_slug, callba
   const mutationQuery = `($id: ID!, $response: String!, $clientMutationId: String!) {
     updateTask: updateTask(input: { clientMutationId: $clientMutationId, id: $id, response: $response }) {
       task {
-        suggestions_count
+        dbid
       }
     }
   }`;
@@ -136,7 +133,7 @@ exports.getMetadata = function(image_url) {
   });
 }
 
-const main = async (image_url, pmid, team_slug, settings, callback) => {
+const extract = async (image_url, pmid, team_slug, settings, callback) => {
   const metadata = await exports.getMetadata(image_url);
   const link = settings.link || 'http://metapicz.com/#landing?imgsrc={URL}'
   const message = [
@@ -146,7 +143,7 @@ const main = async (image_url, pmid, team_slug, settings, callback) => {
     '• Date: ' + metadata.date,
     'See full EXIF information at ' + link.replace('{URL}', image_url)
   ].join("\n");
-  console.log('Sending EXIF metadata to Check: ' + util.inspect(message));
+  console.log('Sending EXIF metadata: ' + util.inspect(message));
   await addComment(pmid, 'EXIF Data', message, null, team_slug, callback);
 };
 
@@ -214,23 +211,15 @@ exports.getGeolocation = (image_url) => {
   });
 }
 
-const suggest = async (image_url, task_id, task_type, task_dbid, team_slug, callback) => {
-  const geojson = await exports.getGeolocation(image_url).catch(function(e) {
+const respond = async (image_url, task_id, task_type, task_dbid, team_slug, callback) => {
+  const geojson = await exports.getGeolocation(image_url).catch(function(error) {
     // TODO send error reply.
+    console.error('Geolocation error: ' + error.message);
   });
-  console.log('Sending GeoJSON suggestion to Check: ' + util.inspect(geojson));
-  await addSuggestion(geojson, task_id, task_type, task_dbid, team_slug, callback);
-};
-
-const assignedToCammie = (data) => {
-  let assigned = false;
-  const edges = data.data.assignments.edges;
-  for (let i = 0; i < edges.length; i++) {
-    if (!assigned && edges[i].node.name === 'Cammie the EXIF Bot') {
-      assigned = true;
-    }
+  if (geojson) {
+    console.log('Sending GeoJSON task response: ' + util.inspect(geojson));
+    await addResponse(geojson, task_id, task_type, task_dbid, team_slug, callback);
   }
-  return assigned;
 };
 
 exports.handler = async (event, context, callback) => {
@@ -239,30 +228,33 @@ exports.handler = async (event, context, callback) => {
     const image_url = data.data.media.picture.replace(/^https?:\/\/[^\/]+/, config.checkApiUrl);
     const pmid = data.data.dbid.toString();
     const team_slug = data.team.slug;
-    let settings = data.settings || '{}';
-    settings = JSON.parse(settings);
+    const settings = JSON.parse(data.settings || '{}');
     if (image_url && pmid && team_slug) {
-      await main(image_url, pmid, team_slug, settings, callback);
+      await extract(image_url, pmid, team_slug, settings, callback);
     }
     else {
+      console.log('Not attempting to extract EXIF metadata.');
       callback(null);
     }
   }
-  else if ((data.event === 'update_annotation_task_geolocation' || data.event === 'create_annotation_task_geolocation') && data.data.project_media.report_type === 'uploadedimage' && assignedToCammie(data)) {
+  else if ((data.event === 'update_annotation_task_geolocation' || data.event === 'create_annotation_task_geolocation') && data.data.project_media.report_type === 'uploadedimage') {
+    const content = JSON.parse(data.data.content);
     const image_url = data.data.project_media.media.picture.replace(/^https?:\/\/[^\/]+/, config.checkApiUrl);
     const task_id = data.data.id.toString();
     const task_dbid = data.data.dbid.toString();
-    const task_type = JSON.parse(data.data.content)['type'];
+    const task_type = content['type'];
     const team_slug = data.team.slug;
-    const suggestions_count = parseInt(JSON.parse(data.data.content)['suggestions_count']);
-    if (image_url && task_id && task_type && team_slug && !suggestions_count) {
-      await suggest(image_url, task_id, task_type, task_dbid, team_slug, callback);
+    const response = data.data.annotations.edges.filter(edge => edge.node.annotation_type === 'task_response_geolocation').length > 0;
+    if (image_url && task_id && task_type && team_slug && !response) {
+      await respond(image_url, task_id, task_type, task_dbid, team_slug, callback);
     }
     else {
+      console.log('Not attempting to respond to geolocation task.');
       callback(null);
     }
   }
   else {
+    console.log(`Ignoring event ${data.event}.`);
     callback(null);
   }
 };
