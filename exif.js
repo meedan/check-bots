@@ -237,7 +237,7 @@ exports.handler = async (event, context, callback) => {
       callback(null);
     }
   }
-  else if ((data.event === 'update_annotation_task_geolocation' || data.event === 'create_annotation_task_geolocation') && data.data.project_media.report_type === 'uploadedimage') {
+  else if (data.event === 'create_annotation_task_geolocation' && data.data.project_media.report_type === 'uploadedimage') {
     const content = JSON.parse(data.data.content);
     const image_url = data.data.project_media.media.picture.replace(/^https?:\/\/[^\/]+/, config.checkApiUrl);
     const task_id = data.data.id.toString();
