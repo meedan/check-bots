@@ -244,7 +244,7 @@ exports.handler = async (event, context, callback) => {
     const task_dbid = data.data.dbid.toString();
     const task_type = content['type'];
     const team_slug = data.team.slug;
-    const response = data.data.annotations.edges.filter(edge => edge.node.annotation_type === 'task_response_geolocation').length > 0;
+    const response = data.data.annotations && data.data.annotations.edges.filter(edge => edge.node.annotation_type === 'task_response_geolocation').length > 0;
     if (image_url && task_id && task_type && team_slug && !response) {
       await respond(image_url, task_id, task_type, task_dbid, team_slug, callback);
     }
