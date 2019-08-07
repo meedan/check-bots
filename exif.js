@@ -258,29 +258,3 @@ exports.handler = async (event, context, callback) => {
     callback(null);
   }
 };
-
-const isLambda = !!((process.env.LAMBDA_TASK_ROOT && process.env.AWS_EXECUTION_ENV) || false);
-const isTesting = typeof global.it === 'function';
-if (isLambda) {
-  // AWS Lambda: do nothing.
-} else if (isTesting) {
-  // Testing: do nothing.
-} else {
-  // Local or elsewhere: listen manually.
-  const express = require('express');
-  const bodyParser = require('body-parser');
-  const app = express();
-  const port = process.env.PORT || 0xb001;
-  app.use(bodyParser.json()); // for parsing application/json
-  app.post('/', (req, res) => {
-    console.log(req.body);
-    req.body = JSON.stringify(req.body); // because the handler will try to parse it again
-    exports.handler(req, null, () => {}).then(() => {
-      res.end();
-    }, (error) => {
-      console.error(error.message);
-      res.status(500).end();
-    });
-  });
-  app.listen(port, () => console.log(`EXIF bot listening on port ${port}...`));
-}

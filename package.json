@@ -24,8 +24,8 @@
     "pretest": "http-server -p 7777 test &",
     "test": "mocha || :",
     "posttest": "pkill -f http-server",
-    "build": "rm -f check-api-bots.zip && zip -9 -r --exclude=*configurator* --exclude=*test* check-api-bots.zip * && echo 'Now upload check-api-bots.zip to AWS Lambda'",
-    "exif": "node exif.js"
+    "build": "rm -f check-bots.zip && zip -9 -r --exclude=*configurator* --exclude=*test* check-bots.zip * && echo 'Now upload check-api-bots.zip to AWS Lambda'",
+    "start": "node server.js"
   },
   "author": "Meedan",
   "license": "ISC"

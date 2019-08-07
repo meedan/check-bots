@@ -1,4 +1,4 @@
-# Check API Bots
+# Check Bots
 
 A collection of bots that can be connected to [Check API](https://github.com/meedan/check-api). They are implemented as AWS Lambda functions.
 
