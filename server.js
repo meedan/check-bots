@@ -22,8 +22,19 @@ app.use(express.json());
 functions.forEach(function(name) {
   app.post('/' + name, function(request, response){
     const lambda = require('./' + name).handler;
-    console.log(util.inspect(request.body));
-    lambda(request.body, { source: 'local' }, generateCallback(response));
+    console.log(name, util.inspect(request.body));
+    try {
+      lambda(request, null, () => {}).then(() => {
+        response.end();
+      }, (error) => {
+        console.error(error.message);
+        response.status(500).end();
+      });
+     }
+     catch (e) {
+        console.error(e.message);
+        response.status(500).end();
+     }
   });
 });
 
