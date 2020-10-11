@@ -3,9 +3,9 @@ MAINTAINER Meedan <sysops@meedan.com>
 
 RUN apt-get update && apt-get install wget git -y
 ENV NVM_DIR /usr/local/nvm
-ENV NODE_VERSION 8.11.4
+ENV NODE_VERSION 10.22.1
 RUN mkdir /usr/local/nvm \
-    && wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash \
+    && wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.36.0/install.sh | bash \
     && . $NVM_DIR/nvm.sh \
     && nvm install $NODE_VERSION \
     && nvm alias default $NODE_VERSION \
