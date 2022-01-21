@@ -1,0 +1,19 @@
+{
+  "name": "hello-check",
+  "version": "1.0.0",
+  "description": "Sample bot for Check",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha",
+    "build": "rm -f hello-check.zip && zip -9 -r hello-check.zip * && echo 'Now upload hello-check.zip to AWS Lambda'",
+    "start": "node server.js"
+  },
+  "author": "Meedan",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.1061.0",
+    "axios": "^0.24.0",
+    "lokka": "^1.7.0",
+    "lokka-transport-http": "^1.6.1"
+  }
+}
