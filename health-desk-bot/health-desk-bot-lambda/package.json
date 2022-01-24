@@ -1,11 +1,11 @@
 {
-  "name": "hello-check",
+  "name": "health-desk-bot-lambda",
   "version": "1.0.0",
   "description": "Sample bot for Check",
   "main": "index.js",
   "scripts": {
     "test": "mocha",
-    "build": "rm -f hello-check.zip && zip -9 -r hello-check.zip * && echo 'Now upload hello-check.zip to AWS Lambda'",
+    "build": "rm -f health-desk-bot-lambda.zip && zip -9 -r health-desk-bot-lambda.zip * && echo 'Now upload health-desk-bot-lambda.zip to AWS Lambda'",
     "start": "node server.js"
   },
   "author": "Meedan",

@@ -1,0 +1,4 @@
+const config = {
+  awsRegion: 'eu-west-1',
+};
+module.exports = config;

@@ -55,46 +55,6 @@ const replyToCheck = async (pmid, team_slug, text, callback) => {
   console.log('Sending mutation with vars: ' + JSON.stringify(vars));
   const resp = await client.mutate(mutationQuery, vars);
   console.log('resp', resp);
-  // .then(function(resp, err) {
-  //   console.log('Check API response: ' + util.inspect(resp));
-  //   callback(null);
-  // })
-  // .catch(function(e) {
-  //   console.error('Error when executing mutation: ' + util.inspect(e));
-  //   callback(null);
-  // });
-};
-
-const alternativeReplyToCheck = async (pmid, team_slug, text, callback) => {
-  const clientMutationId = 'health-desk-bot' + parseInt(new Date().getTime(), 10);
-  const mutation = `
-    mutation {
-      createComment: createComment(input: { clientMutationId: "${clientMutationId}", text: "${'alternativeReplyToCheck: ' + text}", annotated_id: "${pmid}", annotated_type: "ProjectMedia"}) {
-        comment {
-          text
-        }
-      }
-    }
-  `;
-  
-  console.log('mutation', mutation);
-  
-  axios({
-    method: 'post',
-    url: config.qa.checkApiUrl + '/api/graphql?team=' + team_slug,
-    data: {
-      query: mutation,
-    },
-    headers: {
-      'X-Check-Token': config.checkApiAccessToken,
-    }
-  }).then(res => {
-    console.log(`statusCode: ${res.status}`);
-    console.log(JSON.stringify(res.data, null, 2));
-  })
-  .catch(error => {
-    console.error(error);
-  });
 };
 
 exports.handler = (payload, context, callback) => {

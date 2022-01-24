@@ -1,3 +1,4 @@
+const config = require('./config.js');
 const aws = require('aws-sdk');
 
 exports.handler = (event, context, callback) => {
@@ -17,11 +18,10 @@ exports.handler = (event, context, callback) => {
       const payload = JSON.stringify({ data: data });
       console.log('payload', payload);
 
-      lambda
-        .invoke({ FunctionName: 'health-desk-bot-background', InvocationType: 'RequestResponse', Payload: payload })
-        .on('success', function(response) { console.log("Success:", response.data); callback(null); })
-        .on('error', function(error, response) { console.log("Error:", error); console.log("response:", response); })
-        .send();
+      const lambdaRequest = lambda.invoke({ FunctionName: 'health-desk-bot-background', InvocationType: 'Event', Payload: payload });
+      lambdaRequest.send();
+
+      callback(null);
     } else {
       callback(null);
     }
