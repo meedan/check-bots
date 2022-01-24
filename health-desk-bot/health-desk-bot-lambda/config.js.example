@@ -1,4 +1,5 @@
 const config = {
   awsRegion: 'eu-west-1',
+  functionName: 'health-desk-bot-background',
 };
 module.exports = config;

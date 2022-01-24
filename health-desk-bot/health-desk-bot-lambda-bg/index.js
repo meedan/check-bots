@@ -49,7 +49,7 @@ const replyToCheck = async (pmid, team_slug, text, callback) => {
   }`;
 
   const headers = { 'X-Check-Token': config.checkApiAccessToken };
-  const transport = new Transport(config.qa.checkApiUrl + '/api/graphql?team=' + team_slug, { headers, credentials: false, timeout: 120000 });
+  const transport = new Transport(config.live.checkApiUrl + '/api/graphql?team=' + team_slug, { headers, credentials: false, timeout: 120000 });
   const client = new Lokka({ transport });
 
   console.log('Sending mutation with vars: ' + JSON.stringify(vars));

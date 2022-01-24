@@ -18,7 +18,7 @@ exports.handler = (event, context, callback) => {
       const payload = JSON.stringify({ data: data });
       console.log('payload', payload);
 
-      const lambdaRequest = lambda.invoke({ FunctionName: 'health-desk-bot-background', InvocationType: 'Event', Payload: payload });
+      const lambdaRequest = lambda.invoke({ FunctionName: config.functionName, InvocationType: 'Event', Payload: payload });
       lambdaRequest.send();
 
       callback(null);
