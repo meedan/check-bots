@@ -1,4 +1,5 @@
 node_modules
 check-bots*.zip
 config.js
+aws.json
 configurator/

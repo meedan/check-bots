@@ -1,0 +1,5 @@
+const config = {
+  similarityModel: 'elasticsearch', // 'elasticsearch' or 'meantokens'
+  alegreEndpoint: 'http://localhost:5000/text/similarity/',
+};
+module.exports = config;

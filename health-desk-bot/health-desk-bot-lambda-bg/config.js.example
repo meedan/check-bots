@@ -1,0 +1,6 @@
+const config = {
+  // checkApiAccessToken: 'dev',
+  dev: { checkApiUrl: 'https://localhost:3000' },
+  alegreSimilarityEndpoint: 'http://localhost:5000/text/similarity/',
+};
+module.exports = config;
