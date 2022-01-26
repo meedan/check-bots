@@ -23,7 +23,7 @@
   "scripts": {
     "pretest": "http-server -p 7777 test &",
     "test": "mocha",
-    "posttest": "[ -n $CONTINUOUS_TRETA ] && pkill -f http-server || :",
+    "posttest": "[ -n $CONTINUOUS_INTEGRATION ] && pkill -f http-server || :",
     "build": "rm -f check-bots.zip && zip -9 -r --exclude=*configurator* --exclude=*test* check-bots.zip * && echo 'Now upload check-bots.zip to AWS Lambda'",
     "start": "node server.js"
   },
