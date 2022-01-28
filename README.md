@@ -21,7 +21,13 @@ This bot is at `exif.js`. It does the following:
 * Listens to the `create_project_media` event. If it's an uploaded image, it extracts EXIF data and posts it to Check as a comment, with a link for the full report.
 * Listens to the `create_annotation_task_geolocation` and `update_annotation_task_geolocation`. If it's an uploaded image, it extracts GPS data, geocodes it and posts the result as a task response to any **unanswered** geolocation task.
 
-## Usage
+### 3. Health Desk Bot
+
+* Listens to event `create_project_media` events and looks up similar content in Health Desk articles indexed in Alegre.
+
+See details in `./health-desk-bot/README.md`
+
+## Usage (Deploying to AWS)
 
 * Copy `config.js.example` to `config.js` and define your configurations
 * Run `npm run build`
@@ -32,7 +38,6 @@ This bot is at `exif.js`. It does the following:
 ## Local usage
 
 * Copy `config.js.example` to `config.js` and define your local configurations with `checkApiUrl: http://localhost:3000`.
-* Run `npm run exif` or `npm run youtube` to spin up a local server for either bot - note the port number.
 * Start Check locally
-* Find out the local host IP from the Check container as per https://stackoverflow.com/a/33103501
-* On the Check side, the bot request URL is the IP above with the port obtained when starting the bot.
+* The `check-bots` container should start `server.js` on port `8586`
+* On the Check side, the bot request URL should be set to `http://bots:8586/<bot-slug>` ('exif', 'youtube' or 'health-desk').

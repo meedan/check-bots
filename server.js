@@ -36,6 +36,23 @@ functions.forEach(function(name) {
         response.status(500).end();
      }
   });
+
+  app.post('/health-desk', function(request, response){
+    const lambda = require('./health-desk-bot/health-desk-bot-lambda-bg').handler;
+    console.log('health-desk', util.inspect(request.body));
+    try {
+      lambda(request.body, null, () => {}).then(() => {
+        response.end();
+      }, (error) => {
+        console.error(error.message);
+        response.status(500).end();
+      });
+     }
+     catch (e) {
+        console.error(e.message);
+        response.status(500).end();
+     }
+  });
 });
 
 console.log('Starting check-bots on port ' + port);
