@@ -4,6 +4,7 @@
 import requests
 from google.cloud import vision
 import io
+import urllib
 
 # app = Flask(__name__)
 # run_with_ngrok(app)
@@ -12,86 +13,88 @@ os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = "credentials.json"
 
 # [START vision_web_detection]
 def detect_web(content):
-  """Detects web annotations given an image."""
-  client = vision.ImageAnnotatorClient()
+    """Detects web annotations given an image."""
+    client = vision.ImageAnnotatorClient()
 
-  image = vision.Image(content=content)
+    image = vision.Image(content=content)
 
-  response = client.web_detection(image=image)
-  annotations = response.web_detection
-  # full_
-  best_guess_label = ""
-  to_display = ""
-  if annotations.best_guess_labels:
-      for label in annotations.best_guess_labels:
-          to_display = to_display + '\nBest guess label: {}'.format(label.label) + '\n'
-          # print('\nBest guess label: {}'.format(label.label))
-          best_guess_label = label.label
+    response = client.web_detection(image=image)
+    annotations = response.web_detection
+    # full_
+    best_guess_label = ""
+    to_display = ""
 
-  if annotations.pages_with_matching_images:
-      to_display = to_display + '\n{} Pages with matching images found:'.format(
-          len(annotations.pages_with_matching_images)) + '\n'
-      # print('\n{} Pages with matching images found:'.format(
-      #     len(annotations.pages_with_matching_images)))
+    if annotations.best_guess_labels:
+       for label in annotations.best_guess_labels:
+           to_display = to_display + '\\\\nBest guess label {}'.format(label.label) + '\\\\n'
+           # print('\\nBest guess label: {}'.format(label.label))
+           best_guess_label = label.label
 
-      for page in annotations.pages_with_matching_images:
-          to_display = to_display + '\n\tPage url   : {}'.format(page.url) + '\n'
-          # print('\n\tPage url   : {}'.format(page.url))
+    if annotations.pages_with_matching_images:
+       to_display = to_display + '\\\\n{} Pages with matching images found'.format(
+           len(annotations.pages_with_matching_images)) + '\\\\n'
+       # print('\\\\n{} Pages with matching images found:'.format(
+       #     len(annotations.pages_with_matching_images)))
 
-          if page.full_matching_images:
-              # print('\t{} Full Matches found: '.format(
-              #         len(page.full_matching_images)))
-              to_display = to_display + '\t{} Full Matches found: '.format(
-                      len(page.full_matching_images)) + '\n'
+       #urllib.parse.quote_plus
+       for page in annotations.pages_with_matching_images:
+           to_display = to_display + '\\\\n\\\\tPage url    {}'.format(page.url) + '\\\\n'
+           # print('\\\\n\\\\tPage url   : {}'.format(page.url))
 
-              for image in page.full_matching_images:
-                  # print("IMAAA")
-                  # print(image)
-                  to_display = to_display + str(image) + '\n'
-                  # print('\t\tImage url  : {}'.format(image.url))
-                  to_display = to_display + '\t\tImage url  : {}'.format(image.url) + '\n'
+           if page.full_matching_images:
+               # print('\\\\t{} Full Matches found: '.format(
+               #         len(page.full_matching_images)))
+               to_display = to_display + '\\\\t{} Full Matches found '.format(
+                       len(page.full_matching_images)) + '\\\\n'
 
-          if page.partial_matching_images:
-              # print('\t{} Partial Matches found: '.format(
-              #         len(page.partial_matching_images)))
-              to_display = to_display + '\t{} Partial Matches found: '.format(
-                      len(page.partial_matching_images)) + '\n'
+               for image in page.full_matching_images:
+                   # print("IMAAA")
+                   # print(image)
+                   # to_display = to_display + str(image) + '\\\\n'
+                   # print('\\\\t\\\\tImage url  : {}'.format(image.url))
+                   to_display = to_display + '\\\\t\\\\tImage url   {}'.format(image.url) + '\\\\n'
 
-              for image in page.partial_matching_images:
-                  # print('\t\tImage url  : {}'.format(image.url))
-                  to_display = to_display + '\t\tImage url  : {}'.format(image.url) + '\n'
+           if page.partial_matching_images:
+               # print('\\\\t{} Partial Matches found: '.format(
+               #         len(page.partial_matching_images)))
+               to_display = to_display + '\\\\t{} Partial Matches found '.format(
+                       len(page.partial_matching_images)) + '\\\\n'
 
-  if annotations.web_entities:
-      # print('\n{} Web entities found: '.format(
-      #     len(annotations.web_entities)))
-      to_display = to_display + '\n{} Web entities found: '.format(
-          len(annotations.web_entities)) + '\n'
+               for image in page.partial_matching_images:
+                   # print('\\\\t\\\\tImage url  : {}'.format(image.url))
+                   to_display = to_display + '\\\\t\\\\tImage url   {}'.format(image.url) + '\\\\n'
 
-      for entity in annotations.web_entities:
-          # print('\n\tScore      : {}'.format(entity.score))
-          to_display = to_display + '\n\tScore      : {}'.format(entity.score) + '\n'
-          # print(u'\tDescription: {}'.format(entity.description))
-          to_display = to_display + u'\tDescription: {}'.format(entity.description) + '\n'
+    if annotations.web_entities:
+       # print('\\\\n{} Web entities found: '.format(
+       #     len(annotations.web_entities)))
+       to_display = to_display + '\\\\n{} Web entities found '.format(
+           len(annotations.web_entities)) + '\\\\n'
 
-  if annotations.visually_similar_images:
-      # print('\n{} visually similar images found:\n'.format(
-      #     len(annotations.visually_similar_images)))
-      to_display = to_display +'\n{} visually similar images found:\n'.format(
-          len(annotations.visually_similar_images)) + '\n'
+       for entity in annotations.web_entities:
+           # print('\\\\n\\\\tScore      : {}'.format(entity.score))
+           to_display = to_display + '\\\\n\\\\tScore       {}'.format(entity.score) + '\\\\n'
+           # print(u'\\\\tDescription: {}'.format(entity.description))
+           to_display = to_display + u'\\\\tDescription {}'.format(entity.description) + '\\\\n'
 
-      for image in annotations.visually_similar_images:
-          # print('\tImage url    : {}'.format(image.url))
-          to_display = to_display +'\tImage url    : {}'.format(image.url) + '\n'
+    if annotations.visually_similar_images:
+       # print('\\\\n{} visually similar images found:\\\\n'.format(
+       #     len(annotations.visually_similar_images)))
+       to_display = to_display +'\\\\n{} visually similar images found\\\\n'.format(
+           len(annotations.visually_similar_images)) + '\\\\n'
 
-  if response.error.message:
+       for image in annotations.visually_similar_images:
+           # print('\\\\tImage url    : {}'.format(image.url))
+           to_display = to_display +'\\\\tImage url     {}'.format(image.url) + '\\\\n'
+
+    if response.error.message:
       raise Exception(
-          '{}\nFor more info on error messages, check: '
+          '{}\\\\\\\\nFor more info on error messages, check: '
           'https://cloud.google.com/apis/design/errors'.format(
               response.error.message))
-  # return best_guess_label
-  return to_display
+    # return best_guess_label
+    return to_display
     # [END vision_python_migration_web_detection]
-# [END vision_web_detection]
+    # [END vision_web_detection]
 
 
 
