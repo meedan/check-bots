@@ -85,11 +85,12 @@ const addResponse = (geojson, task_id, task_type, task_dbid, team_slug, callback
 const loadImage = function(image_url) {
   return new Promise(function(resolve, reject) {
     request({ uri: image_url, encoding: null }, (err, resp, buffer) => {
-      if (!err) {
+      if (err) {
+        reject(err);
+      } else if (resp.statusCode === 200) {
         resolve(buffer);
-      }
-      else {
-        reject(new Error('Error on getting remote image: ' + util.inspect(err)));
+      } else {
+        reject(new Error(`Error on getting remote image: ${resp.statusCode} - ${resp.statusMessage}`));
       }
     });
   });
@@ -118,7 +119,7 @@ exports.getMetadata = function(image_url) {
   return loadImage(image_url).then(function(image) {
     return getExif(image);
   }, function(error) {
-    console.error(error.message);
+    console.error('Error: ' + error.message);
     return null;
   }).then(function(metadata) {
     return metadata ? Object.assign({}, empty, {
@@ -128,7 +129,7 @@ exports.getMetadata = function(image_url) {
       date: metadata.exif.DateTimeOriginal
     }) : empty;
   }, function(error) {
-    console.error(error.message);
+    console.error('Error:' + error.message);
     return empty;
   });
 }

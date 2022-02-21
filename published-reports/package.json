@@ -1,0 +1,16 @@
+{
+  "name": "published-reports",
+  "version": "1.0.0",
+  "description": "Sample bot to receive notifications when reports are published",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha",
+    "build": "rm -f published-reports.zip && zip -9 -r published-reports.zip * && echo 'Now upload published-reports.zip to AWS Lambda'"
+  },
+  "author": "Meedan",
+  "license": "MIT",
+  "dependencies": {
+    "lokka": "^1.7.0",
+    "lokka-transport-http": "^1.6.1"
+  }
+}
