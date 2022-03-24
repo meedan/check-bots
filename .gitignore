@@ -2,3 +2,5 @@ node_modules
 check-bots*.zip
 config.js
 configurator/
+reverse_images_search_bot/.DS_Store
+reverse_images_search_bot/check_images_webdetection_bot/.DS_Store
