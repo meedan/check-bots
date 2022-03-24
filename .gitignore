@@ -4,3 +4,4 @@ config.js
 configurator/
 reverse_images_search_bot/.DS_Store
 reverse_images_search_bot/check_images_webdetection_bot/.DS_Store
+reverse_images_search_bot/reverse_images_search/credentials.json
