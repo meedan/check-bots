@@ -1,4 +1,3 @@
-var http = require('http');
 
 const config = require('./config.js'),
       Lokka = require('lokka').Lokka,
@@ -40,21 +39,101 @@ const replyToCheck = (pmid, team_slug, text, callback) => {
   });
 };
 
+const changeStatusToReverseImageSearch = (pmid,team_slug,json_obj,callback) => {
+  const vars = {
+    pmid,
+    clientMutationId: 'hello-check' + parseInt(new Date().getTime()),
+  };
+
+  const query = `{
+    project_media(ids:"${pmid}"){
+    last_status_obj {
+      id # will use this id to update status
+    }
+  }}`;
+
+  const headers = {
+    'X-Check-Token': config.checkApiAccessToken
+  };
+
+  const transport = new Transport(config.live.checkApiUrl + '/api/graphql?team=' + team_slug, { headers, credentials: false, timeout: 120000 });
+  const client = new Lokka({ transport });
+
+  client.query(query, vars)
+  .then(function(resp, err) {
+    const status_id = resp['project_media']['last_status_obj']['id']
+    console.log('Response: ' + util.inspect(resp));
+
+    const mutationQuery = `{ updateDynamic(input: {
+      clientMutationId: "1",
+      id: "${status_id}",
+      set_fields: "{\\"verification_status_status\\":\\"1642771242736\\"}",
+    }) {
+      project_media {
+        id
+        last_status
+      }
+    } }`;
+
+    client.mutate(mutationQuery, vars)
+    .then(function(resp, err) {
+      console.log('Response: ' + util.inspect(resp));
+      createReportCheck(pmid, team_slug,json_obj['summary_report'], callback);
+      replyToCheck(pmid, team_slug,json_obj['details_note'], callback);
+      callback(null);
+    })
+    .catch(function(e) {
+      console.log('Error when executing mutation: ' + util.inspect(e));
+      callback(null);
+    });
+  })
+  .catch(function(e) {
+    console.log('Error when executing mutation: ' + util.inspect(e));
+  });
+};
+
+const createReportCheck = (pmid, team_slug, text, callback) => {
+  console.log("createReportCheck")
+  console.log('pmid', pmid);
+  console.log('team_slug', team_slug);
+  console.log('text', text);
+  const vars = {
+    text,
+    pmid,
+    clientMutationId: 'hello-check' + parseInt(new Date().getTime()),
+  };
+
+  const mutationQuery = `( $pmid: String!){
+  createDynamicAnnotationReportDesign(input: {
+    action: "save",
+    clientMutationId: "1",
+    annotated_type: "ProjectMedia",
+    annotated_id: $pmid,
+    set_fields: "{\\"state\\":\\"published\\",\\"options\\":[{\\"language\\":\\"en\\",\\"use_text_message\\":true,\\"title\\":\\"Report using google cloud vision\\",\\"text\\": \\"${text}\\"}]}"
+  }) { dynamic { dbid } } }`;
+
+  const headers = {
+    'X-Check-Token': config.checkApiAccessToken
+  };
+
+  const transport = new Transport(config.live.checkApiUrl + '/api/graphql?team=' + team_slug, { headers, credentials: false, timeout: 120000 });
+  const client = new Lokka({ transport });
+
+  client.mutate(mutationQuery, vars)
+  .then(function(resp, err) {
+    console.log('Response: ' + util.inspect(resp));
+    callback(null);
+  })
+  .catch(function(e) {
+    console.log('Error when executing mutation: ' + util.inspect(e));
+    callback(null);
+  });
+};
+
 exports.handler = (event, context, callback) => {
-
-
-  // request('http://127.0.0.1:5000/webdetection?image_url=%22x%22', { json: true }, (err, res, body) => {
-  //   if (err) { return console.log(err); }
-  //   console.log(body.url);
-  //   console.log(body.explanation);
-  // });
-  
   const data = JSON.parse(event.body);
   console.log('JSON.parse(event.body)', data);
   if (data.event === 'create_project_media') {
-    // console.log(util.inspect(context));
-    //const content = data.data.media.url// || data.data.media.quote;
-    // const headers = util.inspect(event.headers);
     const headers = null;
     const pmid = data.data.dbid.toString();
     const projectId = data.data.project.dbid;
@@ -62,46 +141,42 @@ exports.handler = (event, context, callback) => {
     console.log('picture', picture);
 
     console.log('projectId', projectId);
-    if (projectId == 14912) {
+    if (projectId == 14912 || 14837) {
         console.log('da5al','da5al');
         const https = require('https');
-        
-        const http = require("http");
-    // const https = require("https");
+
     const url_obj = require("url");
-    // const https = require('https')
-    // let url = "https://8uvhoko4d6.execute-api.us-east-1.amazonaws.com/default/reverse_images_search?image_url=https://assets.checkmedia.org/uploads/uploaded_image/779075/embed_173cbfefc3f68ad010d9bdc01d326dd1.jpeg"
     let url = "https://8uvhoko4d6.execute-api.us-east-1.amazonaws.com/default/reverse_images_search?image_url="+picture
 
-  console.log("request url", url);
-  console.log("p",picture)
-    console.log("ps","https://8uvhoko4d6.execute-api.us-east-1.amazonaws.com/default/reverse_images_search?image_url="+picture)
+    console.log("request url", url);
+    console.log("picture",picture)
+    console.log("backend response","https://8uvhoko4d6.execute-api.us-east-1.amazonaws.com/default/reverse_images_search?image_url="+picture)
 
     const promise = new Promise(function(resolve, reject) {
     https.get(url, (res) => {
     console.log("https.get(url, (res)");
               res.setEncoding('utf8');
         let responseBody = '';
-    
+
         res.on('data', (chunk) => {
             responseBody += chunk;
         });
-    
-        res.on('end', () => {
-           console.log("responseBody");
-          console.log(responseBody);
-                replyToCheck(pmid, data.team.slug,responseBody, callback);
 
-            // resolve(JSON.parse(responseBody));
+        res.on('end', () => {
+          console.log("responseBody");
+          const json_obj = JSON.parse(responseBody);
+          console.log(json_obj);
+          if (picture !== ""){
+            changeStatusToReverseImageSearch(pmid,data.team.slug,json_obj, callback);
+          }
         });
-    
+
     resolve(res.statusCode)
     }).on('error', (e) => {
-    console.log("2");
-    reject(Error(e))
-    })
-    })
-      // replyToCheck(pmid, data.team.slug,'22 Hello from bot! You added ' + data.data.title + ' to ' + data.team.slug + '. The headers: ' + headers , callback);
+        console.log("2");
+        reject(Error(e))
+        })
+       })
     }
   } else if (data.event === 'update_project_media') {
     console.log(util.inspect(context));
