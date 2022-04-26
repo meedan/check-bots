@@ -18,6 +18,7 @@ before_install:
 before_script:
 - docker-compose build
 - docker-compose -f docker-compose.yml -f docker-test.yml up -d
+- until curl --silent -I -f --fail http://localhost:3000; do printf .; sleep 1; done
 script:
 - docker-compose exec bots bash -c "npm run pretest" &
 - docker-compose exec bots npm run test
