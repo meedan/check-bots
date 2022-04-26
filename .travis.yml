@@ -1,12 +1,26 @@
 language: minimal
 dist: bionic
 before_install:
+- openssl aes-256-cbc -K $encrypted_1677f29b39bf_key -iv $encrypted_1677f29b39bf_iv
+  -in config.js.enc -out config.js -d
 - export LC_ALL=C.UTF-8
 - export LANG=C.UTF-8
 - export LANGUAGE=C.UTF-8
+# check api
+- export CHECK_API_BRANCH=$((git ls-remote --exit-code --heads https://github.com/meedan/check-api.git $TRAVIS_BRANCH >/dev/null && echo $TRAVIS_BRANCH) || echo 'develop')
+- echo "Using branch $CHECK_API_BRANCH for Check API"
+- git clone --branch=$CHECK_API_BRANCH https://github.com/meedan/check-api.git
+- cd check-api
+- cp config/config.yml.example config/config.yml
+- cp config/database.yml.example config/database.yml
+- cp config/sidekiq.yml.example config/sidekiq.yml
+- cd -
 before_script:
-- docker-compose build bots
-script: docker-compose run bots bash -c 'npm build && npm test'
+- docker-compose build
+- docker-compose -f docker-compose.yml -f docker-test.yml up -d
+script:
+- docker-compose exec bots bash -c "npm run pretest" &
+- docker-compose exec bots npm run test
 notifications:
   slack:
     secure: EB6npc5OJOCurE/c1Tqo9+4smMNgM6JEKennHBvwxZZ3QTvDpjGWqmzrBESWrU7zSbEkXL7JscUSFuaMWkgwfTegbP1Nw98DwVDKK50dufmYQlyzWYpsdqtdAF+MdgGjmYRkR3UITW2jrwlVTUQiSNV1aq1mJ116g2zu3VqoQc61IouUYCw7pjXgbbQFHGFmfDGVbMBxombbySgxcRoSbxxLkGh7+33Qi4EvPDz8s0OznKQOtxESmmUc+9Z9UjSvt/LncgtyADNUSGCryXTqU0APh2M/vcAhSbR+eSx/O58VE8+guADyjnbuqsoDcjV3uNbtiipe62AAuR/Hbsn8UZfYRG4vDztwq772vGnwI7nYiyldT8faVwaeOl5qdInd0V27SnJ1T8sk36O0scYUJ0xJvNpWq4dloqhnCytJqIPbLIFXHm1jBEsGPv2UkfWvO91Y8mnVY2/OPldqIiN/VgIJcdSMloXowCcyHFMyd3WfOzV8ppY3KHnBsBxnVc6HbIwZQcJSfZd7UW8o9Czu7CVrkppzrD2VSkWLLUxcRZXqtd4BNRefi0PGmVN+PE993+8vSFvhYKpICNK7R9Y3DuXezQiAG+h90+qIZ7FXkVBJEB23gSBYTyZh0mkD7MSYM71BZ55WFmsedWk8M3GVSTGAMnbwoOP35rB40J4pGOc=

@@ -1,0 +1,13 @@
+version: "2.1"
+networks:
+  default:
+    name: dev
+services:
+  bots:
+    environment:
+      NODE_ENV: test
+      SERVER_PORT: 8586
+  api:
+    environment:
+      RAILS_ENV: test
+      SERVER_PORT: 3000
