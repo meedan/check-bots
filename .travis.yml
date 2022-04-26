@@ -21,7 +21,6 @@ before_script:
 - until curl --silent -I -f --fail http://localhost:3000; do printf .; sleep 1; done
 - docker-compose exec bots npm i
 script:
-- docker-compose exec bots bash -c "npm run pretest" &
 - docker-compose exec bots npm run test
 notifications:
   slack:
