@@ -3,7 +3,7 @@ var { getMetadata, getGeolocation } = require('../exif');
 
 describe('EXIF bot tests', function () {
   it('should extract the correct metadata from an image', async function () {
-    var metadata = await getMetadata('http://localhost:7777/IMG_1994.jpg');
+    var metadata = await getMetadata('http://bots:7777/IMG_1994.jpg');
     assert.deepEqual(metadata, {
       make: 'Apple',
       model: 'iPhone XR',
@@ -20,7 +20,7 @@ describe('EXIF bot tests', function () {
       software: 'Not found',
       date: 'Not found'
     });
-    var metadata1 = await getMetadata('http://localhost:7777/IMG_1995.jpg');
+    var metadata1 = await getMetadata('http://bots:7777/IMG_1995.jpg');
     assert.deepEqual(metadata1, {
       make: 'Not found',
       model: 'Not found',
@@ -30,7 +30,7 @@ describe('EXIF bot tests', function () {
   });
 
   it('should extract the correct GeoJSON information from an image', async function () {
-    var geojson = await getGeolocation('http://localhost:7777/DSCN0010.jpg');
+    var geojson = await getGeolocation('https://raw.githubusercontent.com/ianare/exif-samples/master/jpg/gps/DSCN0010.jpg');
     assert.deepEqual(geojson, {
       type: "Feature",
       geometry: {
@@ -44,7 +44,7 @@ describe('EXIF bot tests', function () {
   });
 
   it('should throw error when no GeoJSON information is found', async function () {
-    var geojson = await getGeolocation('http://localhost:7777/IMG_1994.jpg').catch(error => {
+    var geojson = await getGeolocation('http://bots:7777/IMG_1994.jpg').catch(error => {
       assert.equal(error.message, 'No GPS information found');
     });
     assert.equal(geojson, undefined);

@@ -1,4 +1,4 @@
-FROM ubuntu
+FROM ubuntu:20.04
 MAINTAINER Meedan <sysops@meedan.com>
 
 RUN apt-get update && apt-get install wget git -y
