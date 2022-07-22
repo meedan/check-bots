@@ -1,6 +1,6 @@
 const config = {
   // checkApiAccessToken: 'dev',
   dev: { checkApiUrl: 'https://localhost:3000' },
-  alegreSimilarityEndpoint: 'http://localhost:5000/text/similarity/',
+  alegreSimilarityEndpoint: 'http://localhost:3100/text/similarity/',
 };
 module.exports = config;
