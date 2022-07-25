@@ -1,5 +1,5 @@
 const config = {
   similarityModel: 'elasticsearch', // 'elasticsearch' or 'meantokens'
-  alegreEndpoint: 'http://localhost:5000/text/similarity/',
+  alegreEndpoint: 'http://localhost:3100/text/similarity/',
 };
 module.exports = config;

@@ -90,4 +90,4 @@ if __name__ == "__main__":
 
 
 
-#  http://127.0.0.1:5000/webdetection?image_url=https://ca-times.brightspotcdn.com/dims4/default/0a9b158/2147483647/strip/true/crop/840x560+0+0/resize/840x560!/quality/90/?url=https%3A%2F%2Fcalifornia-times-brightspot.s3.amazonaws.com%2F45%2F85%2F4f7d420b48a8a0e10c12c7b06042%2Fkim.jpg
+#  http://127.0.0.1:3100/webdetection?image_url=https://ca-times.brightspotcdn.com/dims4/default/0a9b158/2147483647/strip/true/crop/840x560+0+0/resize/840x560!/quality/90/?url=https%3A%2F%2Fcalifornia-times-brightspot.s3.amazonaws.com%2F45%2F85%2F4f7d420b48a8a0e10c12c7b06042%2Fkim.jpg

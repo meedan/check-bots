@@ -43,7 +43,7 @@ const replyToCheck = (pmid, team_slug, text, callback) => {
 exports.handler = (event, context, callback) => {
 
 
-  // request('http://127.0.0.1:5000/webdetection?image_url=%22x%22', { json: true }, (err, res, body) => {
+  // request('http://127.0.0.1:3100/webdetection?image_url=%22x%22', { json: true }, (err, res, body) => {
   //   if (err) { return console.log(err); }
   //   console.log(body.url);
   //   console.log(body.explanation);
