@@ -74,13 +74,14 @@ exports.handler = (event, context, callback) => {
         });
       
         res.on('end', () => {
-          console.log("responseBody");
+          console.log(responseBody);
           const json_obj = JSON.parse(responseBody);
           //const text=responseBody;
           //console.log(json_obj);
-          let text = `Found ${json_obj["hits"]["total"]["value"]} related tweets on Twitter. The top three are\n`;
+          //let text = `Found ${json_obj["hits"]["total"]["value"]} related tweets on Twitter. The top three are\n`;
+          let text = `The closest related tweets on Twitter are\n`;
           for (let i=0; i<Math.min(3,json_obj["hits"]["hits"].length); i++) {
-            text+=`${i+1}. ${json_obj["hits"]["hits"][i]["_source"]["text"]}. ${twitterid2href(json_obj["hits"]["hits"][i]["_id"])}\n`;
+            text+=`${i+1}. ${json_obj["hits"]["hits"][i]["_source"]["text"].trim()}. (${Math.round(json_obj["hits"]["hits"][i]["_score"]*100)/100.0}) ${twitterid2href(json_obj["hits"]["hits"][i]["_id"])}\n`;
           }
           console.log(text);
           //if (json_obj['is_politics'] == "1"){
