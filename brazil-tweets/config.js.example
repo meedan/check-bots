@@ -1,0 +1,9 @@
+const config = {
+  checkApiAccessToken: 'token',
+  live: { checkApiUrl: 'url'},
+  qa: { checkApiUrl: 'url'},
+  searchapiurl: 'url'
+};
+module.exports = config;
+
+

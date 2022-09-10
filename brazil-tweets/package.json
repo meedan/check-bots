@@ -1,0 +1,18 @@
+{
+  "name": "search-brazil-tweets",
+  "version": "1.0.0",
+  "description": "Bot to search for matching tweets and add a note to a Check item",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha",
+    "build": "rm -f search-brazil-tweets.zip && zip -9 -r search-brazil-tweets.zip * && echo 'Now upload search-brazil-tweets.zip to AWS Lambda'",
+    "start": "node server.js"
+  },
+  "author": "Meedan",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.24.0",
+    "lokka": "^1.7.0",
+    "lokka-transport-http": "^1.3.2"
+  }
+}
