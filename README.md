@@ -24,6 +24,7 @@ This bot is at `exif.js`. It does the following:
 ## Usage
 
 * Copy `config.js.example` to `config.js` and define your configurations
+* Run `npm install` to install the dependencies on your first run or if you change dependencies.
 * Run `npm run build`
 * Create an AWS Lambda function with an API gateway and upload the ZIP file from the previous step
 * Define the correct handler (e.g., `youtube.handler` or `exif.handler`)
