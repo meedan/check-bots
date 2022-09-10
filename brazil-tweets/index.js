@@ -22,7 +22,7 @@ const replyToCheck = async (pmid, team_slug, text, callback) => {
   }`;
 
   const headers = { 'X-Check-Token': config.checkApiAccessToken };
-  const transport = new Transport(config.qa.checkApiUrl + '/api/graphql?team=' + team_slug, { headers, credentials: false, timeout: 120000 }); //TODO LIVE
+  const transport = new Transport(config.live.checkApiUrl + '/api/graphql?team=' + team_slug, { headers, credentials: false, timeout: 120000 }); //TODO LIVE
   const client = new Lokka({ transport });
 
   console.log('Sending mutation with vars: ' + JSON.stringify(vars));
@@ -41,7 +41,7 @@ const replyToCheck = async (pmid, team_slug, text, callback) => {
 
 const twitterid2href = function(s) {
   s=s.split(":");
-  return `https://twitter.com/${s[1]}/statuses/${s[2]}`;
+  return `https://twitter.com/${s[1]}/status/${s[2]}`;
 };
 
 exports.handler = (event, context, callback) => {
