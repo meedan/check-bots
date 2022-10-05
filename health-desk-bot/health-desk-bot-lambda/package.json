@@ -15,5 +15,8 @@
     "axios": "^0.24.0",
     "lokka": "^1.7.0",
     "lokka-transport-http": "^1.6.1"
-  }
+  },
+  "scripts": {
+    "build": "rm -f health-desk-bot-lambda.zip && zip -9 -r --exclude=*configurator* --exclude=*test* health-desk-bot-lambda.zip * && echo 'Now upload health-desk-bot-lambda.zip to AWS Lambda'",
+  },
 }
