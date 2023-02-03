@@ -19,6 +19,7 @@
 import argparse
 import json
 import logging
+import requests
 from datetime import datetime, timezone
 import tempfile
 
@@ -30,7 +31,7 @@ class GoogleFactcheckLoader(object):
         # TODO: need to toggle Alegre target based local/qa/live
         assert env == 'localdev'
 
-    GOOGLE_FACT_CHECK_URL = 'https://storage.googleapis.com/datacommons-feeds/factcheck/latest/data.json'
+    GOOGLE_FACT_CHECK_FEED_URL = 'https://storage.googleapis.com/datacommons-feeds/factcheck/latest/data.json'
     ALEGRE_CONTEXT = {"bot":"google-factcheck-explorer"}
     ALEGRE_MODELS = ['elasticsearch','xlm-r-bert-base-nli-stsb-mean-tokens']
 
@@ -40,9 +41,14 @@ class GoogleFactcheckLoader(object):
         TODO: cache in AWS S3 instead of local file system
         TODO: retry in case of connection flakyness
         """
-        logging.info('Downloading latest factcheck file from {}'.format(self.GOOGLE_FACT_CHECK_URL))
+        logging.info('Downloading latest factcheck file from {}'.format(self.GOOGLE_FACT_CHECK_FEED_URL))
         date_suffix = datetime.now().strftime("%Y%m%d")
         file_path = tempfile.gettempdir()+'factcheck_data_'+date_suffix+'.json'
+        with requests.get(self.GOOGLE_FACT_CHECK_FEED_URL, stream=True) as r:
+            r.raise_for_status()
+            with open(file_path, 'wb') as f:
+                for chunk in r.iter_content(chunk_size=8192): 
+                    f.write(chunk)
         return file_path
 
     def read_factchecks_since(self, file_path, start_date: datetime):
@@ -172,6 +178,7 @@ class GoogleFactcheckLoader(object):
         TODO: which content should be included
         TODO: do we need to normalize urls etc ala Pender
         TODO: any items that error should be returned to be logged
+        TODO: log out ids of sucessfull inserts?
         """
         logging.info('Attempting to load fact checks to alegre')
         for claim in claim_reviews:
@@ -197,9 +204,6 @@ class GoogleFactcheckLoader(object):
         results = self.insert_into_alegre(claims_to_load)
         logging.info('completed')
         
-        
-
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -225,7 +229,7 @@ if __name__ == '__main__':
         '--file',
         required=False,
         dest='file_path',
-        help='Optional path to previously download json file containing factchecks',
+        help='Optional path to previously downloaded json file containing factchecks (if omitted will download from url)',
     )
     # TODO: add --dry-run
     args = parser.parse_args()
