@@ -17,8 +17,8 @@
     "util": "^0.11.0"
   },
   "devDependencies": {
-    "http-server": "^0.11.2",
-    "mocha": "^6.2.0"
+    "http-server": "^14.1.1",
+    "mocha": "^6.2.3"
   },
   "scripts": {
     "pretest": "http-server -p 7777 test &",
