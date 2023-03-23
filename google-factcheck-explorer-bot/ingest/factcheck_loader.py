@@ -1,21 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# Copyright 2020 Google LLC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-
-
 import argparse
 import json
 import logging
@@ -28,12 +12,14 @@ logging.basicConfig(level=logging.INFO)
 class GoogleFactcheckLoader(object):
 
     def __init__(self, env) -> None:
-        # TODO: need to toggle Alegre target based local/qa/live
+        # TODO: need to toggle Alegre config based local/qa/live
+        # TODO: just pull config from environment variables?
         assert env == 'localdev'
 
     GOOGLE_FACT_CHECK_FEED_URL = 'https://storage.googleapis.com/datacommons-feeds/factcheck/latest/data.json'
     ALEGRE_CONTEXT = {"bot":"google-factcheck-explorer"}
     ALEGRE_MODELS = ['elasticsearch','xlm-r-bert-base-nli-stsb-mean-tokens']
+    ALEGRE_ENDPOINT = 'http://localhost:3100/text/similarity/' # localdev
 
     def download_latest_factchecks(self):
         """
@@ -174,15 +160,48 @@ class GoogleFactcheckLoader(object):
     def insert_into_alegre(self, claim_reviews):
         """
         Loop over the list of fact checks and try to load them into Alegre via the API
-        TODO: how do we auth to the API?
-        TODO: which content should be included
+        TODO: which content should be included  (decided by Fetch API)
         TODO: do we need to normalize urls etc ala Pender
         TODO: any items that error should be returned to be logged
         TODO: log out ids of sucessfull inserts?
         """
         logging.info('Attempting to load fact checks to alegre')
+        # pull credentials?
+        # login to api? NOPE, running on same network 
+            # check status
+
         for claim in claim_reviews:
             print(claim)
+            # extract relevant fields from claim
+            # format paylod
+            """ TODO: use similarity_request document model?
+            similarity_request = api.model('similarity_request', {
+                'text': fields.String(required=False, description='text to be stored or queried for similarity'),
+                'doc_id': fields.String(required=False, description='text ID to constrain uniqueness'),
+                'model': fields.String(required=False, description='similarity model to use: "elasticsearch" (pure Elasticsearch, default) or the key name of an active model'),
+                'models': fields.List(required=False, description='similarity models to use: ["elasticsearch"] (pure Elasticsearch, default) or the key name of an active model', cls_or_instance=fields.String),
+                'language': fields.String(required=False, description='language code for the analyzer to use during the similarity query (defaults to standard analyzer)'),
+                'threshold': fields.Float(required=False, description='minimum score to consider, between 0.0 and 1.0 (defaults to 0.9)'),
+                'context': JsonObject(required=False, description='context'),
+                'fuzzy': fields.Boolean(required=False, description='whether or not to use fuzzy search on GET queries (only used when model is set to \'elasticsearch\')'),
+            })
+            """
+            context = self.ALEGRE_CONTEXT
+            model = self.ALEGRE_MODELS
+            text = '' # TODO: url and all the content from claim concatenated as text
+                      # look at check-api/app/models/bot/fetch.rb 
+            doc_id = '' #MD5 hash of text?
+            language = '' # do we have text language detection endpoint?  leave blank, eventually we want auto https://meedan.atlassian.net/browse/CV2-848
+                          # meanwhile, make a seperate call to allegre to guess
+            threshold = ''  # this should be very high, since we don't want other content to link to it?
+            fuzzy = True
+
+            # submit request to endpoint
+            # createProjectMedia? createComment?
+
+            # handle errors
+
+        # logout of API
 
 
 
