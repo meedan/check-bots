@@ -1,0 +1,27 @@
+{
+  "name": "google-factcheck-explorer-bot-lambda",
+  "version": "0.1.0",
+  "description": "backend function for suggesting google ClaimReview items",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha",
+    "build": "rm -f google-factcheck-explorer-bot-lambda && zip -9 -r google-factcheck-explorer-bot-lambda.zip * && echo 'google-factcheck-explorer-bot-lambda.zip to AWS Lambda'",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/meedan/check-bots.git"
+  },
+  "author": "Meedan",
+  "license": "ISC",
+  "homepage": "https://meedan.com/",
+  "dependencies": {
+    "aws-sdk": "^2.1061.0",
+    "axios": "^0.24.0",
+    "lokka": "^1.7.0",
+    "lokka-transport-http": "^1.3.2"
+  },
+  "scripts": {
+    "build": "rm -f google-factcheck-explorer-bot-lambda.zip && zip -9 -r --exclude=*configurator* --exclude=*test* google-factcheck-explorer-bot-lambda.zip * && echo 'Now upload google-factcheck-explorer-bot-lambda.zip to AWS Lambda'"
+  }
+}
