@@ -71,7 +71,6 @@ exports.handler = (event, context, callback) => {
             },
           method: 'GET'  // post not configurd
         };
-        console.log(options)
 
         //TODO: check if the length is appropriate for GET, or figure out how to get cloudflare to let the POST in
         
@@ -84,26 +83,42 @@ exports.handler = (event, context, callback) => {
           });
         
           res.on('end', () => {
-            console.log('request status',res.statusCode)
-            // TODO: if the request status is an error code, lets error out here?
+            if (res.statusCode >= 400){
+              console.error('Request error status',res.statusCode)
+              console.log('Error response body:',responseBody);
+            }
             console.log('response body:',responseBody);
             const json_obj = JSON.parse(responseBody);
-            let text = `The closest related ClaimReviews are\n`;
-            for (let i=0; i<Math.min(3,json_obj["hits"]["hits"].length); i++) {
-                // TODO: get the google claim url out of the response, not twitter
-              text+=`${i+1}. ${json_obj["hits"]["hits"][i]["_source"]["text"].trim()}. (${Math.round(json_obj["hits"]["hits"][i]["_score"]*100)/100.0}) ${twitterid2href(json_obj["hits"]["hits"][i]["_id"])}\n`;
+            // check if anything matched {"data":[],"meta":{"record-count":0}}
+            if (json_obj["meta"]["record-count"] > 0){
+              // {"data":[{"id":"20007","type":"feeds","links":{"self":"https://qa-check-api.checkmedia.org/api/v2/feeds/20007"},
+              // "attributes":{"claim":"-","claim-context":null,"claim-tags":"",
+              // "fact-check-title":"Madhuri Dixit campaigning For Imran Khan?",
+              // "fact-check-summary":"Pakistan's PTI party is using Amitabh Bachchan and Madhuri Dixit photos on their campaign posters",
+              // "fact-check-published-on":1679572669,"fact-check-rating":"undetermined",
+              // "published-article-url":"https://www.indiatoday.in/fact-check/story/viral-test-big-b-madhuri-dixit-campaigning-for-imran-khan-1294131-2018-07-24",
+              // "organization":"Google fact check tools"}}],
+              // "meta":{"record-count":1}}
+              let text = `Closely releated ClaimReviews from Google Factcheck Tools:\n`;
+              for (let i=0; i<Math.min(3,json_obj["meta"]["record-count"]); i++) {
+                // extract items from claim and format text to display as comment
+                claim_title = json_obj["data"][i]["attributes"]["fact-check-title"].trim()
+                source_url = json_obj["data"][i]["attributes"]["published-article-url"]
+                text+=`${i+1}. ${claim_title}. ${source_url}\n`;
+              }
+              console.log(text);
+              // make a call back to Check with the text to be used a comments on the PM item
+              replyToCheck(pmid, data.team.slug, text, callback);
+            } else {
+              console.log('no matching ClaimReviews returned')
             }
-            console.log(text);
-            // make a call back to Check with the text to be used a comments on the PM item
-            replyToCheck(pmid, data.team.slug, text, callback);
           });
         });
         
         req.on('error', (e) => {
           console.error(e);
         });
-        
-        //req.write(postData);
+
         req.end();
       }
      
