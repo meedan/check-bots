@@ -5,7 +5,9 @@ const config = require('./config.js'),
 const aws = require('aws-sdk');
 
 // This is the 'callback' via GraphQL API to tell Check to show the included text as a comment, 
-// associted with the project media id
+// associted with the project media id for the specific team indicated by the team_slug
+// TODO: how does it manage auth? Seems like the API key should not be the one used to 
+// access the the Google Fact Check Feed?
 const replyToCheck = async (pmid, team_slug, text, callback) => {
     console.log('pmid', pmid);
     console.log('team_slug', team_slug);
@@ -27,7 +29,7 @@ const replyToCheck = async (pmid, team_slug, text, callback) => {
 
     const headers = { 'X-Check-Token': config.checkApiAccessToken };
     // TODO: live/qa switch?
-    const transport = new Transport(config.live.checkApiUrl + '/api/graphql?team=' + team_slug, { headers, credentials: false, timeout: 120000 }); //TODO LIVE
+    const transport = new Transport('https://' + config.checkApiUrl + '/api/graphql?team=' + team_slug, { headers, credentials: false, timeout: 120000 });
     const client = new Lokka({ transport });
 
     console.log('Sending Project Media comment mutation with vars: ' + JSON.stringify(vars));
@@ -44,9 +46,9 @@ const replyToCheck = async (pmid, team_slug, text, callback) => {
     });
 };
 
-// This is the event handleri, to be triggered on each new Project Media creation
+// This is the event handler, to be triggered on each new Project Media creation
 // it will call a search in Alegre to look for similar ClaimReview items in the 
-// GoogleFactCheck feed. 
+// GoogleFactCheck feed defined in the config. 
 exports.handler = (event, context, callback) => {
     const data = JSON.parse(event.body);
     const feed_id = config.googleFactCheckFeedId // this will be different in live vs QA
@@ -63,7 +65,7 @@ exports.handler = (event, context, callback) => {
         const http = require('https');
   
         var options = {
-          hostname: config.searchapiurl,
+          hostname: config.checkApiUrl,
           path: `/api/v2/feeds?filter\[feed_id\]=${feed_id}&filter\[query\]=${encodeURIComponent(title)}`,
           headers: {
               Accept: 'application/vnd.api+json',
@@ -117,6 +119,8 @@ exports.handler = (event, context, callback) => {
         
         req.on('error', (e) => {
           console.error(e);
+          // surface connection errors as exceptions
+          throw e;
         });
 
         req.end();

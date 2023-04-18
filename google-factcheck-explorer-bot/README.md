@@ -10,7 +10,7 @@ For items to become availible to be displayed by the bot
     - TODO: replace this with more efficient ingest process, perhaps based on the code in `/ingest`
 * the google-fact-check-tools workspace https://checkmedia.org/google-fact-check-tools/project/15547 listens for 
 new ClaimReviews and stored in Check under its team id.  
-* google-fact-check-tools also publishes the content to a "shared feed'
+* google-fact-check-tools also publishes the content to a "shared feed' associated with its team id
 * the items on the shared feed are availible for similarity queries via Check API
 
 ## Bot operation
@@ -18,7 +18,8 @@ When this bot is configured in a workspace
 * the bot listens on a webhook for new ProjectMedia creation events `/google-factcheck-explorer-bot`
 * the text from the PM is similarity compared with the availible set of ClaimReview items via Check API in a query 
 managed by an AWS Lambda function defined in `/google-factcheck-explorer-bot-lambda`
-* any resulting items are displayed
+* any resulting ClaimReview links are written back as 'notes' on the ProjectMedia items in the workspace to be displayed in the sidebar
+* NOTE: an API appropriately configured API key is needed to give bot permissions to write to the workspace https://meedan.atlassian.net/wiki/spaces/ENG/pages/1126105091/How+to+create+an+API+key+for+a+Check+workspace  
 
 # Bot testing setup
 ## testing the background side
@@ -35,10 +36,11 @@ which should give a response like
 ```
 
 ## deploying the AWS lambda
-This give instructions for deploying a related bot https://meedan.atlassian.net/wiki/spaces/ENG/pages/1126531073/How+to+deploy+Check+Slack+Bot
+This gives instructions for deploying a related bot https://meedan.atlassian.net/wiki/spaces/ENG/pages/1126531073/How+to+deploy+Check+Slack+Bot
 how to deploy lambdas in general https://docs.aws.amazon.com/lambda/latest/dg/lambda-deploy-functions.html
 * If this is a release, bump the version number in `package.json`
 * update secrets in config JS (for QA or Live)
+
 * also run `npm install` to install all the required libraries locally
 * `npm run build` this runs toplevel build script in `package.json` and creates a `google-factcheck-explorer-bot-lambda.zip` file with all the bots in it, and all of their requirements TODO: can this be defined per bot
 
@@ -47,6 +49,12 @@ how to deploy lambdas in general https://docs.aws.amazon.com/lambda/latest/dg/la
 * `aws lambda update-function-code --function-name qa-google-factcheck-explorer-bot --zip-file fileb://qa_google-factcheck-explorer-bot-lambda.zip`
 * https://docs.aws.amazon.com/lambda/latest/dg/nodejs-package.html
 * https://eu-west-1.console.aws.amazon.com/lambda/home?region=eu-west-1#/functions/qa-google-factcheck-explorer-bot
+* The Lambda can be tested in the AWS web console by firing an appropriately formatted  'test' event 
+    ```
+    {
+  "body": "{\"event\": \"create_project_media\", \"team\": {\"dbid\": 1506991, \"id\": \"abcdefg\", \"avatar\": \"https://assets.checkmedia.org/uploads/team/6503/Group_89.png\", \"name\": \"Check testing\", \"slug\": \"check-testing\"}, \"data\": {\"type\": \"Claim\", \"dbid\": 1506991, \"title\": \"Is it true Pakistan's PTI party is using Amitabh Bachchan and Madhuri Dixit photos on their campaign posters?\", \"description\": \"Charles III come\\u00e7a reinado em busca de monarquia simplificada e papel pol\\u00edtico mais ativo\"}}"
+}
+```
 
 
 
