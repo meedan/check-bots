@@ -1,6 +1,6 @@
 {
   "name": "google-factcheck-explorer-bot-lambda",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "backend function for suggesting google ClaimReview items",
   "main": "index.js",
   "scripts": {
