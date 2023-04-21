@@ -8,10 +8,11 @@ Shows Notes with Claim Review content that has been imported from https://toolbo
 For items to become availible to be displayed by the bot
 * ClaimReivew objects are parsed daily by Fetch plugin `fetch/lib/claim_review_parsers/google_fact_check.rb`
     - TODO: replace this with more efficient ingest process, perhaps based on the code in `/ingest`
-* the google-fact-check-tools workspace https://checkmedia.org/google-fact-check-tools/project/15547 listens for 
+* The google-fact-check-tools workspace https://checkmedia.org/google-fact-check-tools/project/15547 listens for 
 new ClaimReviews and stored in Check under its team id.  
 * google-fact-check-tools also publishes the content to a "shared feed' associated with its team id, with access permission determined by API key. 
-* the items on the shared feed are availible for similarity queries via Check API
+* The items on the shared feed are availible for similarity queries via Check API
+* NOTE: usually items in the project need to be in the 'published' state to be availible for similarity matching. It may be necessary to toggle them using a script like https://github.com/meedan/check-scripts/blob/main/publish_imported_reports.rb
 
 ## Bot operation
 When this bot is configured in a workspace
@@ -36,35 +37,41 @@ which should give a response like
 ```
 
 ## Deploying the AWS lambda
-This gives instructions for deploying a related bot https://meedan.atlassian.net/wiki/spaces/ENG/pages/1126531073/How+to+deploy+Check+Slack+Bot
-how to deploy lambdas in general https://docs.aws.amazon.com/lambda/latest/dg/lambda-deploy-functions.html
+This gives instructions for deploying a related bot: https://meedan.atlassian.net/wiki/spaces/ENG/pages/1126531073/How+to+deploy+Check+Slack+Bot
+General AWS docs on how to deploy lambdas: https://docs.aws.amazon.com/lambda/latest/dg/lambda-deploy-functions.html
 * If this is a release, bump the version number in `package.json`
-* Update secrets in `config.js` (for QA or Live)
-`checkApiAccessToken` <- this needs the key to the GoogleFactCheck feed *and* to authorize anotations on a team's ProjectMedia
-* TODO: how do we set the QA vs Live check api endpoints?
 *  Run `npm install` to install all the required libraries locally so they will get packaged up by the build for deployment.
 * `npm run build` this runs toplevel build script in `package.json` and creates a `google-factcheck-explorer-bot-lambda.zip` file with the bot script, and all of the requirements
-* Rename the zip file with qa prefix (if not deploying to live)
+* NOTE: after first build, will need to delete google-factcheck-explorer-bot-lambda.zip to avoid nesting it in the next build package
 * TODO: set up new location for deployments? (this is in US-EAST and doesn't work so deploying directly instead)  https://s3.console.aws.amazon.com/s3/buckets/meedan-check-bot?region=us-east-1&tab=objects  
-* If this is the first deployment create a Lambda via the AWS web console similar to https://eu-west-1.console.aws.amazon.com/lambda/home?region=eu-west-1#/functions/qa-google-factcheck-explorer-bot
-* Start an aws cli session and deploy local files to the lambda location `aws lambda update-function-code --function-name qa-google-factcheck-explorer-bot --zip-file fileb://qa_google-factcheck-explorer-bot-lambda.zip`
-* The Lambda can be tested in the AWS web console by firing an appropriately formatted  'test' event in the web console (Note that the team slug will need to correspond to the team hosting the project media and data dbid will be project media id)
-    ```
-    {
-  "body": "{\"event\": \"create_project_media\", \"team\": {\"dbid\": 1506991, \"id\": \"abcdefg\", \"avatar\": \"https://assets.checkmedia.org/uploads/team/6503/Group_89.png\", \"name\": \"Check testing\", \"slug\": \"check-testing\"}, \"data\": {\"type\": \"Claim\", \"dbid\": 19205, \"title\": \"Is it true Pakistan's PTI party is using Amitabh Bachchan and Madhuri Dixit photos on their campaign posters?\", \"description\": \"Charles III come\\u00e7a reinado em busca de monarquia simplificada e papel pol\\u00edtico mais ativo\"}}"
-}
-```
-* Lambda timeout can be increased to 3 minutes on the configuration tab
-* The bot needs to be authorized to write to the project media of the target team by being added as TeamBotInstalation.
+* For the first deployment create a Lambda via the AWS web console similar to https://eu-west-1.console.aws.amazon.com/lambda/home?region=eu-west-1#/functions/qa-google-factcheck-explorer-bot
+* TODO: terraform aws lambda? https://registry.terraform.io/modules/terraform-aws-modules/lambda/aws/latest
 * The Lambda needs the API Gateway Trigger setup so that there is an external http endpoint that can be called. For example https://eu-west-1.console.aws.amazon.com/lambda/home?region=eu-west-1#/functions/qa-google-factcheck-explorer-bot?tab=configure
-* The endpoint url from the trigger needs to be set as the '<webhook>' when setting the bot configuration https://meedan.atlassian.net/wiki/spaces/ENG/pages/1126268929/How+to+configure+a+webhook+for+a+Check+Bot
-* The event structure sent by the webhook needs to match what the bot is expecting to parse out of the JSON payload, ie `bot_user.set_events = [{"event"=>"create_project_media", "graphql"=>"dbid, title, description, type"}]`
+* The endpoint url from the trigger needs to be set as the '`<webhook>`' when setting the bot configuration as per instructions https://meedan.atlassian.net/wiki/spaces/ENG/pages/1126268929/How+to+configure+a+webhook+for+a+Check+Bot
+* Lambda timeout can be increased to 3 minutes on the configuration tab
+* Update environment (live/QA) appropriate secrets and config in Lambda's Configuration > Environment Variables section
+   * `CHECK_API_ACCESS_TOKEN`  <-- this needs the key to the GoogleFactCheck feed *and* to authorize anotations on a team's ProjectMedia
+   * `CHECK_API_URL` <-- Usually `qa-check-api.checkmedia.org` or `check-api.checkmedia.org`
+   * `GOOGLE_FACT_CHECK_FEED_ID`  <-- feed id to pull factchecks from
+* To deploy, start an `aws cli` session and deploy local files to the lambda location (best for quickly redeploys during development)
+  * `aws lambda update-function-code --function-name qa-google-factcheck-explorer-bot --zip-file fileb://google-factcheck-explorer-bot-lambda.zip`
+* The Lambda can be tested in the AWS web console by firing an appropriately formatted  'test' event in the web console (Note that the team slug will need to correspond to the team hosting the project media and data dbid will be project media id)
+  * ```
+    {
+        "body": "{\"event\": \"create_project_media\", \"team\": {\"dbid\": 1506991, \"id\": \"abcdefg\", \"avatar\": \"https://assets.checkmedia.org/uploads/team/6503/Group_89.png\", \"name\": \"Check testing\", \"slug\": \"check-testing\"}, \"data\": {\"type\": \"Claim\", \"dbid\": 19205, \"title\": \"Is it true Pakistan's PTI party is using Amitabh Bachchan and Madhuri Dixit photos on their campaign posters?\", \"description\": \"Charles III come\\u00e7a reinado em busca de monarquia simplificada e papel pol\\u00edtico mais ativo\"}}"
+    }
+    ```
+
+* The bot needs to be authorized to write to the project media of the target team by being added as TeamBotInstalation.
+* The event structure sent by the webhook needs to match what the bot is expecting to parse out of the JSON payload, ie 
+  * `bot_user.set_events = [{"event"=>"create_project_media", "graphql"=>"dbid, title, description, type"}]`
 * Logs from event hook will appear in CloudWatch, with a few minutes delay https://eu-west-1.console.aws.amazon.com/cloudwatch/home?region=eu-west-1#logsV2:log-groups/log-group/$252Faws$252Flambda$252Fqa-google-factcheck-explorer-bot
 
 
 ## testing the bot side locally
 I NEVER GOT THIS FULLY WORKING, WAS JUST TESTING IN QA
 * Copy `config.js.example` to `config.js` and define your local configurations with `checkApiUrl: http://localhost:3000`.
+* NOTE: *don't commit secrets in config changes!* in QA/Live these are read from ENV variables
 * TODO: can the local point to QA to host the items?
 * Start Check web and bots containers locally `docker-compose -f docker-compose.yml up bots web`
     * configure a workspace to *install* the bots for testing by logging into check-web at `localhost:3333`

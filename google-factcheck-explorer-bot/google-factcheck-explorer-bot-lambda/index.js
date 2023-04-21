@@ -4,10 +4,32 @@ const config = require('./config.js'),
         Transport = require('lokka-transport-http').Transport;
 const aws = require('aws-sdk');
 
+
+const getConfigFromEnvWithFallback = (env_key, fallback_value=None) => {
+  // get secrets from local env, falling back to config
+  if (env_key in Object.keys(process.env)) 
+    value = process.env[env_key];
+  else
+    console.warn('Environment variable for ' + env_key + 'is not defined, using value from config');
+    value = fallback_value;
+  return value
+};
+
+
+// secret api token with permissions to access feed and write to bot target
+const CHECK_API_ACCESS_TOKEN = getConfigFromEnvWithFallback('CHECK_API_ACCESS_TOKEN', config.checkApiAccessToken)
+
+// url for check-api (live vs QA)
+const CHECK_API_URL = getConfigFromEnvWithFallback('CHECK_API_URL', config.checkApiUrl)
+
+// id of feed where claim reviews will be queried (this will be different in live vs QA)
+const GOOGLE_FACT_CHECK_FEED_ID = getConfigFromEnvWithFallback('GOOGLE_FACT_CHECK_FEED_ID',config.googleFactCheckFeedId)
+
+
 // This is the 'callback' via GraphQL API to tell Check to show the included text as a comment, 
-// associted with the project media id for the specific team indicated by the team_slug
-// TODO: how does it manage auth? Seems like the API key should not be the one used to 
-// access the the Google Fact Check Feed?
+// associted with the project media id for the specific team indicated by the team_slug.
+// The bot must be authorized (via its api key amd TeamBotIntegration) to make edits to the 
+// team's ProjectMedia
 const replyToCheck = async (pmid, team_slug, text, callback) => {
     console.log('pmid', pmid);
     console.log('team_slug', team_slug);
@@ -27,9 +49,10 @@ const replyToCheck = async (pmid, team_slug, text, callback) => {
     }`;
 
 
-    const headers = { 'X-Check-Token': config.checkApiAccessToken };
-    // TODO: live/qa switch?
-    const transport = new Transport('https://' + config.checkApiUrl + '/api/graphql?team=' + team_slug, { headers, credentials: false, timeout: 120000 });
+    const headers = { 'X-Check-Token': CHECK_API_ACCESS_TOKEN };
+    // NOTE: if API key lacks appropriate permissions, will probably see:
+    // "Error when executing Project Media comment mutation: Error: GraphQL Error: No permission to create Comment"
+    const transport = new Transport('https://' + CHECK_API_URL + '/api/graphql?team=' + team_slug, { headers, credentials: false, timeout: 120000 });
     const client = new Lokka({ transport });
 
     console.log('Sending Project Media comment mutation with vars: ' + JSON.stringify(vars));
@@ -51,8 +74,6 @@ const replyToCheck = async (pmid, team_slug, text, callback) => {
 // GoogleFactCheck feed defined in the config. 
 exports.handler = (event, context, callback) => {
     const data = JSON.parse(event.body);
-    const feed_id = config.googleFactCheckFeedId // this will be different in live vs QA
-    const api_key = config.checkApiAccessToken
     console.log('JSON.parse(event.body)', data);
     if (data.event === 'create_project_media') {
       const pmid = data.data.dbid.toString();
@@ -65,11 +86,11 @@ exports.handler = (event, context, callback) => {
         const http = require('https');
   
         var options = {
-          hostname: config.checkApiUrl,
-          path: `/api/v2/feeds?filter\[feed_id\]=${feed_id}&filter\[query\]=${encodeURIComponent(title)}`,
+          hostname: CHECK_API_URL,
+          path: `/api/v2/feeds?filter\[feed_id\]=${GOOGLE_FACT_CHECK_FEED_ID}&filter\[query\]=${encodeURIComponent(title)}`,
           headers: {
               Accept: 'application/vnd.api+json',
-              'X-Check-Token': `${api_key}`, // This API key has access to Check workspace with googleFactCheck items
+              'X-Check-Token': `${CHECK_API_ACCESS_TOKEN}`, // This API key has access to Check workspace with googleFactCheck items
             },
           method: 'GET'  // post not configurd
         };
