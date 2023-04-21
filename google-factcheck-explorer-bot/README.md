@@ -40,6 +40,7 @@ which should give a response like
 This gives instructions for deploying a related bot: https://meedan.atlassian.net/wiki/spaces/ENG/pages/1126531073/How+to+deploy+Check+Slack+Bot
 General AWS docs on how to deploy lambdas: https://docs.aws.amazon.com/lambda/latest/dg/lambda-deploy-functions.html
 * If this is a release, bump the version number in `package.json`
+* rename `config.js.example` to `config.js` (config.js is git ignored to avoid secrets)
 *  Run `npm install` to install all the required libraries locally so they will get packaged up by the build for deployment.
 * `npm run build` this runs toplevel build script in `package.json` and creates a `google-factcheck-explorer-bot-lambda.zip` file with the bot script, and all of the requirements
 * NOTE: after first build, will need to delete google-factcheck-explorer-bot-lambda.zip to avoid nesting it in the next build package
@@ -71,7 +72,6 @@ General AWS docs on how to deploy lambdas: https://docs.aws.amazon.com/lambda/la
 ## testing the bot side locally
 I NEVER GOT THIS FULLY WORKING, WAS JUST TESTING IN QA
 * Copy `config.js.example` to `config.js` and define your local configurations with `checkApiUrl: http://localhost:3000`.
-* NOTE: *don't commit secrets in config changes!* in QA/Live these are read from ENV variables
 * TODO: can the local point to QA to host the items?
 * Start Check web and bots containers locally `docker-compose -f docker-compose.yml up bots web`
     * configure a workspace to *install* the bots for testing by logging into check-web at `localhost:3333`
