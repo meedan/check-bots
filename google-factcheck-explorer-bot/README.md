@@ -43,7 +43,6 @@ General AWS docs on how to deploy lambdas: https://docs.aws.amazon.com/lambda/la
 * rename `config.js.example` to `config.js` (config.js is git ignored to avoid secrets)
 *  Run `npm install` to install all the required libraries locally so they will get packaged up by the build for deployment.
 * `npm run build` this runs toplevel build script in `package.json` and creates a `google-factcheck-explorer-bot-lambda.zip` file with the bot script, and all of the requirements
-* NOTE: after first build, will need to delete google-factcheck-explorer-bot-lambda.zip to avoid nesting it in the next build package
 * TODO: set up new location for deployments? (this is in US-EAST and doesn't work so deploying directly instead)  https://s3.console.aws.amazon.com/s3/buckets/meedan-check-bot?region=us-east-1&tab=objects  
 * For the first deployment create a Lambda via the AWS web console similar to https://eu-west-1.console.aws.amazon.com/lambda/home?region=eu-west-1#/functions/qa-google-factcheck-explorer-bot
 * TODO: terraform aws lambda? https://registry.terraform.io/modules/terraform-aws-modules/lambda/aws/latest

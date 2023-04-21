@@ -7,14 +7,14 @@ const aws = require('aws-sdk');
 
 const getConfigFromEnvWithFallback = (env_key, fallback_value=None) => {
   // get secrets from local env, falling back to config
-  if (env_key in Object.keys(process.env)) 
+  if (env_key in process.env) {
     value = process.env[env_key];
-  else
-    console.warn('Environment variable for ' + env_key + 'is not defined, using value from config');
+  } else {
+    console.warn('Environment variable for ' + env_key + ' is not defined, using value from config');
     value = fallback_value;
-  return value
+  }
+  return value;
 };
-
 
 // secret api token with permissions to access feed and write to bot target
 const CHECK_API_ACCESS_TOKEN = getConfigFromEnvWithFallback('CHECK_API_ACCESS_TOKEN', config.checkApiAccessToken)
