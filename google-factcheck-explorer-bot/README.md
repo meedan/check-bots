@@ -43,7 +43,7 @@ General AWS docs on how to deploy lambdas: https://docs.aws.amazon.com/lambda/la
 * rename `config.js.example` to `config.js` (config.js is git ignored to avoid secrets)
 *  Run `npm install` to install all the required libraries locally so they will get packaged up by the build for deployment.
 * `npm run build` this runs toplevel build script in `package.json` and creates a `google-factcheck-explorer-bot-lambda.zip` file with the bot script, and all of the requirements
-* TODO: set up new location for deployments? (this is in US-EAST and doesn't work so deploying directly instead)  https://s3.console.aws.amazon.com/s3/buckets/meedan-check-bot?region=us-east-1&tab=objects  
+
 * For the first deployment create a Lambda via the AWS web console similar to https://eu-west-1.console.aws.amazon.com/lambda/home?region=eu-west-1#/functions/qa-google-factcheck-explorer-bot
 * TODO: terraform aws lambda? https://registry.terraform.io/modules/terraform-aws-modules/lambda/aws/latest
 * The Lambda needs the API Gateway Trigger setup so that there is an external http endpoint that can be called. For example https://eu-west-1.console.aws.amazon.com/lambda/home?region=eu-west-1#/functions/qa-google-factcheck-explorer-bot?tab=configure
@@ -55,6 +55,7 @@ General AWS docs on how to deploy lambdas: https://docs.aws.amazon.com/lambda/la
    * `GOOGLE_FACT_CHECK_FEED_ID`  <-- feed id to pull factchecks from
 * To deploy, start an `aws cli` session and deploy local files to the lambda location (best for quickly redeploys during development)
   * `aws lambda update-function-code --function-name qa-google-factcheck-explorer-bot --zip-file fileb://google-factcheck-explorer-bot-lambda.zip`
+* For 'real' deployments, we want to keep an archive of the deployed code, so best to deploy via  https://s3.console.aws.amazon.com/s3/buckets/meedan-check-bot-deployments?region=eu-west-1&tab=objects  and use the 'upload from S3 location' option in AWS Lambda console ui
 * The Lambda can be tested in the AWS web console by firing an appropriately formatted  'test' event in the web console (Note that the team slug will need to correspond to the team hosting the project media and data dbid will be project media id)
   * ```
     {
