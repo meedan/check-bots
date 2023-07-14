@@ -17,13 +17,13 @@ const getConfigFromEnvWithFallback = (env_key, fallback_value=None) => {
 };
 
 // secret api token with permissions to access feed and write to bot target
-const CHECK_API_ACCESS_TOKEN = getConfigFromEnvWithFallback('CHECK_API_ACCESS_TOKEN', config.checkApiAccessToken)
+const CHECK_API_GOOGLE_FACT_CHECK_ACCESS_TOKEN = getConfigFromEnvWithFallback('CHECK_API_GOOGLE_FACT_CHECK_ACCESS_TOKEN', config.checkApiAccessToken)
 
 // url for check-api (live vs QA)
 const CHECK_API_URL = getConfigFromEnvWithFallback('CHECK_API_URL', config.checkApiUrl)
 
 // id of feed where claim reviews will be queried (this will be different in live vs QA)
-const GOOGLE_FACT_CHECK_FEED_ID = getConfigFromEnvWithFallback('GOOGLE_FACT_CHECK_FEED_ID',config.googleFactCheckFeedId)
+const CHECK_API_WORKSPACE_ACCESS_TOKEN = getConfigFromEnvWithFallback('CHECK_API_WORKSPACE_ACCESS_TOKEN',config.checkApiWorkspaceAccessToken)
 
 
 // This is the 'callback' via GraphQL API to tell Check to show the included text as a comment, 
@@ -37,7 +37,7 @@ const replyToCheck = async (pmid, team_slug, text, callback) => {
     const vars = {
       text,
       pmid,
-      clientMutationId: 'goolge-factcheck-bot' + parseInt(new Date().getTime(), 10),
+      clientMutationId: 'google-factcheck-bot' + parseInt(new Date().getTime(), 10),
     };
   
     const mutationQuery = `($text: String!, $pmid: String!, $clientMutationId: String!) {
@@ -48,8 +48,9 @@ const replyToCheck = async (pmid, team_slug, text, callback) => {
       }
     }`;
 
-
-    const headers = { 'X-Check-Token': CHECK_API_ACCESS_TOKEN };
+    // this access token needs permission to write into the project media of the workspace
+    // where the bot is installed
+    const headers = { 'X-Check-Token': CHECK_API_WORKSPACE_ACCESS_TOKEN };
     // NOTE: if API key lacks appropriate permissions, will probably see:
     // "Error when executing Project Media comment mutation: Error: GraphQL Error: No permission to create Comment"
     const transport = new Transport('https://' + CHECK_API_URL + '/api/graphql?team=' + team_slug, { headers, credentials: false, timeout: 120000 });
@@ -87,10 +88,10 @@ exports.handler = (event, context, callback) => {
   
         var options = {
           hostname: CHECK_API_URL,
-          path: `/api/v2/feeds?filter\[feed_id\]=${GOOGLE_FACT_CHECK_FEED_ID}&filter\[query\]=${encodeURIComponent(title)}`,
+          path: `/api/v2/feeds?filter\[query\]=${encodeURIComponent(title)}`,
           headers: {
               Accept: 'application/vnd.api+json',
-              'X-Check-Token': `${CHECK_API_ACCESS_TOKEN}`, // This API key has access to Check workspace with googleFactCheck items
+              'X-Check-Token': `${CHECK_API_GOOGLE_FACT_CHECK_ACCESS_TOKEN}`, // This API key has access to Check workspace with googleFactCheck items
             },
           method: 'GET'  // post not configurd
         };
