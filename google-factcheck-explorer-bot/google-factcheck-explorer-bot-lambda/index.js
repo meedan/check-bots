@@ -54,6 +54,7 @@ const replyToCheck = async (pmid, team_slug, text, callback) => {
     // NOTE: if API key lacks appropriate permissions, will probably see:
     // "Error when executing Project Media comment mutation: Error: GraphQL Error: No permission to create Comment"
     const transport = new Transport('https://' + CHECK_API_URL + '/api/graphql?team=' + team_slug, { headers, credentials: false, timeout: 120000 });
+    console.log(transport)
     const client = new Lokka({ transport });
 
     console.log('Sending Project Media comment mutation with vars: ' + JSON.stringify(vars));
@@ -77,6 +78,8 @@ exports.handler = (event, context, callback) => {
     const data = JSON.parse(event.body);
     console.log('JSON.parse(event.body)', data);
     if (data.event === 'create_project_media') {
+      console.log('Google Fact Check bot processing project media creation event')
+      // there could be an error paylod instead, but we let it fail to surface
       const pmid = data.data.dbid.toString();
       const type = data.data.type;
       //TODO: Decide whether to include imported reports ("Blank")
@@ -123,14 +126,15 @@ exports.handler = (event, context, callback) => {
               // "published-article-url":"https://www.indiatoday.in/fact-check/story/viral-test-big-b-madhuri-dixit-campaigning-for-imran-khan-1294131-2018-07-24",
               // "organization":"Google fact check tools"}}],
               // "meta":{"record-count":1}}
-              let text = `Closely releated ClaimReviews from Google Factcheck Tools:\n`;
+              let text = `<h6>Closely releated ClaimReviews from Google Factcheck Tools:</h6>\n`;
+              text = text + "<ul>"
               for (let i=0; i<Math.min(3,json_obj["meta"]["record-count"]); i++) {
                 // extract items from claim and format text to display as comment
                 claim_title = json_obj["data"][i]["attributes"]["fact-check-title"].trim()
                 source_url = json_obj["data"][i]["attributes"]["published-article-url"]
-                text+=`${i+1}. ${claim_title}. ${source_url}\n`;
+                text+=`<li> ${claim_title}. ${source_url}</li>\n`;
               }
-              console.log(text);
+              text += "</ul>"
               // make a call back to Check with the text to be used a comments on the PM item
               replyToCheck(pmid, data.team.slug, text, callback);
             } else {

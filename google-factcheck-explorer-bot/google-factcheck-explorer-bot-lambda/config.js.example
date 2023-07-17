@@ -4,5 +4,6 @@ const config = {
     // these are fallback values, will be overriden by ENV set in lambda
     checkApiAccessToken: '<api key here>', //corresponds to CHECK_API_ACCESS_TOKEN in ENV
     checkApiUrl: 'localhost:3000', // check-graphql endpoint (eg. qa-check-api.checkmedia.org) CHECK_API_URL in ENV
-    checkApiWorkspaceAccessToken: '<workspace api key here>' //api key entitled to write into the workspace where bot is 'installed'
+    checkApiWorkspaceAccessToken: '<workspace api key here>', //api key entitled to write into the workspace where bot is installed
+}
 module.exports = config;

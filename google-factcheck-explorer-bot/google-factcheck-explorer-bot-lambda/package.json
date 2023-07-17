@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha",
-    "build": "rm -f google-factcheck-explorer-bot-lambda && zip -9 -r google-factcheck-explorer-bot-lambda.zip *",
+    "build": "rm -f google-factcheck-explorer-bot-lambda.zip && zip -9 -r google-factcheck-explorer-bot-lambda.zip *",
     "start": "node server.js"
   },
   "repository": {
