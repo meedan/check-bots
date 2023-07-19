@@ -99,7 +99,6 @@ exports.handler = (event, context, callback) => {
           method: 'GET'  // post not configurd
         };
 
-        //TODO: check if the length is appropriate for GET, or figure out how to get cloudflare to let the POST in
         
         var req = http.request(options, (res) => {
           res.setEncoding('utf8');

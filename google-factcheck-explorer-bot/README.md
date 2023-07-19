@@ -4,6 +4,10 @@ Shows Notes with Claim Review content that has been imported from https://toolbo
 
 # Overview
 
+NOTE: These instructions include references to documentation and AWS infrastructure that are not
+visable outside the Meedan organization. Please contact us if you need information about any of 
+these resources to install this code on your own system.
+
 ## Background data
 For items to become availible to be displayed by the bot
 * ClaimReivew objects are parsed daily by Fetch plugin `fetch/lib/claim_review_parsers/google_fact_check.rb`
@@ -17,6 +21,12 @@ new ClaimReviews and stored in Check under its team id.
 ## Bot operation
 When this bot is configured in a workspace
 * The bot listens on a webhook for new ProjectMedia creation events for a team, configured as per https://meedan.atlassian.net/wiki/spaces/ENG/pages/1126268929/How+to+configure+a+webhook+for+a+Check+Bot
+```
+    bot_user = BotUser.where(name: "Google fact check workspace API Client")[0]
+    bot_user.set_request_url = "https://qyrh1ewsd0.execute-api.eu-west-1.amazonaws.com/default/qa-google-factcheck-explorer-bot"
+    bot_user.set_events = [{"event"=>"create_project_media", "graphql"=>"dbid, title, description, type"}]
+    bot_user.save!
+```
 * The text from the PM is similarity compared with the availible set of ClaimReview items via Check API in a query 
 managed by an AWS Lambda function defined in `/google-factcheck-explorer-bot-lambda`
 * Any resulting ClaimReview links are written back as 'comments' on the ProjectMedia items in the workspace to be displayed as Notes the sidebar
@@ -29,7 +39,7 @@ managed by an AWS Lambda function defined in `/google-factcheck-explorer-bot-lam
 * Import the google claim review content from Fetch https://meedan.atlassian.net/wiki/spaces/ENG/pages/1163821066/How+to+re-+import+content+from+Fetch+into+a+Check+workspace
 * Confirm that the feed can be queried:
 ```
-curl -X GET -H "Accept: application/vnd.api+json" -H "X-Check-Token: <API_KEY_GOES_HERE>" "https://qa-check-api.checkmedia.org/api/v2/feeds?filter\[feed_id\]=16&filter\[query\]=test"
+curl -X GET -H "Accept: application/vnd.api+json" -H "X-Check-Token: <API_KEY_GOES_HERE>" "https://qa-check-api.checkmedia.org/api/v2/feeds?filter\[query\]=test"
 ```
 which should give a response like
 ```
@@ -50,9 +60,9 @@ General AWS docs on how to deploy lambdas: https://docs.aws.amazon.com/lambda/la
 * The endpoint url from the trigger needs to be set as the '`<webhook>`' when setting the bot configuration as per instructions https://meedan.atlassian.net/wiki/spaces/ENG/pages/1126268929/How+to+configure+a+webhook+for+a+Check+Bot
 * Lambda timeout can be increased to 3 minutes on the configuration tab
 * Update environment (live/QA) appropriate secrets and config in Lambda's Configuration > Environment Variables section
-   * `CHECK_API_ACCESS_TOKEN`  <-- this needs the key to the GoogleFactCheck feed *and* to authorize anotations on a team's ProjectMedia
+   * `CHECK_API_GOOGLE_FACT_CHECK_ACCESS_TOKEN`  <-- this needs the key to the GoogleFactCheck feed workspace
+   * `CHECK_API_WORKSPACE_ACCESS_TOKEN` <-- this needs to authorize anotations on a team's ProjectMedia
    * `CHECK_API_URL` <-- Usually `qa-check-api.checkmedia.org` or `check-api.checkmedia.org`
-   * `GOOGLE_FACT_CHECK_FEED_ID`  <-- feed id to pull factchecks from
 * To deploy, start an `aws cli` session and deploy local files to the lambda location (best for quickly redeploys during development)
   * `aws lambda update-function-code --function-name qa-google-factcheck-explorer-bot --zip-file fileb://google-factcheck-explorer-bot-lambda.zip`
 * For 'real' deployments, we want to keep an archive of the deployed code, so best to deploy via  https://s3.console.aws.amazon.com/s3/buckets/meedan-check-bot-deployments?region=eu-west-1&tab=objects  and use the 'upload from S3 location' option in AWS Lambda console ui
