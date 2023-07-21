@@ -6,7 +6,7 @@ Shows Notes with Claim Review content that has been imported from https://toolbo
 
 NOTE: These instructions include references to documentation and AWS infrastructure that are not
 visable outside the Meedan organization. Please contact us if you need information about any of 
-these resources to install this code on your own system.
+these resources to install this code on your own system. The installation process is also recorded on an internal wiki page: `Installing the Google factcheck tools bot in a workspace`
 
 ## Background data
 For items to become availible to be displayed by the bot
@@ -84,6 +84,5 @@ I NEVER GOT THIS FULLY WORKING, WAS JUST TESTING IN QA
 * TODO: can the local point to QA to host the items?
 * Start Check web and bots containers locally `docker-compose -f docker-compose.yml up bots web`
     * configure a workspace to *install* the bots for testing by logging into check-web at `localhost:3333`
-    *  https://meedan.atlassian.net/wiki/spaces/ENG/pages/1126268929/How+to+configure+a+webhook+for+a+Check+Bot 
 * The `check-bots` container should start `server.js` on port `8586`
 * On the Check side, the bot request URL should be set to `http://bots:8586/<bot-slug>` ('exif', 'youtube' or 'health-desk').
