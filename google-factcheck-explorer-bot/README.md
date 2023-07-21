@@ -11,32 +11,31 @@ these resources to install this code on your own system.
 ## Background data
 For items to become availible to be displayed by the bot
 * ClaimReivew objects are parsed daily by Fetch plugin `fetch/lib/claim_review_parsers/google_fact_check.rb`
-    - TODO: replace this with more efficient ingest process, perhaps based on the code in `/ingest`
+    - TODO: replace this with more efficient ingest process, perhaps based on the code in `/ingest` (this code is currently not used)
 * The google-fact-check-tools workspace https://checkmedia.org/google-fact-check-tools/project/15547 listens for 
-new ClaimReviews and stored in Check under its team id.  
-* google-fact-check-tools also publishes the content to a "shared feed' associated with its team id, with access permission determined by API key. 
-* The items on the shared feed are availible for similarity queries via Check API
+new ClaimReviews and stored in Check under its team id.   
+* The items in the workspace are availible for similarity queries via Check API, with access permission determined by API key. 
 * NOTE: usually items in the project need to be in the 'published' state to be availible for similarity matching. It may be necessary to toggle them using a script like https://github.com/meedan/check-scripts/blob/main/publish_imported_reports.rb
 
 ## Bot operation
 When this bot is configured in a workspace
-* The bot listens on a webhook for new ProjectMedia creation events for a team, configured as per https://meedan.atlassian.net/wiki/spaces/ENG/pages/1126268929/How+to+configure+a+webhook+for+a+Check+Bot
+* The bot listens on a webhook for new ProjectMedia creation events for a team, configured as per internal wiki page `How to configure a webhook for a Check Bot`
 ```
     bot_user = BotUser.where(name: "Google fact check workspace API Client")[0]
-    bot_user.set_request_url = "https://qyrh1ewsd0.execute-api.eu-west-1.amazonaws.com/default/qa-google-factcheck-explorer-bot"
+    bot_user.set_request_url = "<bot api gatway url>"
     bot_user.set_events = [{"event"=>"create_project_media", "graphql"=>"dbid, title, description, type"}]
     bot_user.save!
 ```
 * The text from the PM is similarity compared with the availible set of ClaimReview items via Check API in a query 
 managed by an AWS Lambda function defined in `/google-factcheck-explorer-bot-lambda`
 * Any resulting ClaimReview links are written back as 'comments' on the ProjectMedia items in the workspace to be displayed as Notes the sidebar
-* An appropriately configured API key is needed to give bot permissions to write to the workspace. This is done by mapping the BotUser to the team https://meedan.atlassian.net/wiki/spaces/ENG/pages/1126105091/How+to+create+an+API+key+for+a+Check+workspace
+* An appropriately configured API key is needed to give bot permissions to write to the workspace. This is done by mapping the BotUser to the team. Internal wiki page `How to create an API key for a Check workspace`
 
 # Bot testing setup
 ## Testing the background side
 * Setup a workspace in QA to host the content (will this work or need to do locally)
-* Configure a shared feed for it and an api key https://meedan.atlassian.net/wiki/spaces/ENG/pages/1126105091
-* Import the google claim review content from Fetch https://meedan.atlassian.net/wiki/spaces/ENG/pages/1163821066/How+to+re-+import+content+from+Fetch+into+a+Check+workspace
+* Configure an api key with premissions to access the workspace via a `BotUser`. Internal wiki page `How to create an API key for a Check workspace`
+* Import the google claim review content from Fetch. Internal wiki page `How to re- import content from Fetch into a Check workspace`
 * Confirm that the feed can be queried:
 ```
 curl -X GET -H "Accept: application/vnd.api+json" -H "X-Check-Token: <API_KEY_GOES_HERE>" "https://qa-check-api.checkmedia.org/api/v2/feeds?filter\[query\]=test"
@@ -47,7 +46,7 @@ which should give a response like
 ```
 
 ## Deploying the AWS lambda
-This gives instructions for deploying a related bot: https://meedan.atlassian.net/wiki/spaces/ENG/pages/1126531073/How+to+deploy+Check+Slack+Bot
+This internal wiki page gives instructions for deploying a related bot: `How to deploy Check Slack Bot`
 General AWS docs on how to deploy lambdas: https://docs.aws.amazon.com/lambda/latest/dg/lambda-deploy-functions.html
 * If this is a release, bump the version number in `package.json`
 * rename `config.js.example` to `config.js` (config.js is git ignored to avoid secrets)
@@ -56,8 +55,8 @@ General AWS docs on how to deploy lambdas: https://docs.aws.amazon.com/lambda/la
 
 * For the first deployment create a Lambda via the AWS web console similar to https://eu-west-1.console.aws.amazon.com/lambda/home?region=eu-west-1#/functions/qa-google-factcheck-explorer-bot
 * TODO: terraform aws lambda? https://registry.terraform.io/modules/terraform-aws-modules/lambda/aws/latest
-* The Lambda needs the API Gateway Trigger setup so that there is an external http endpoint that can be called. For example https://eu-west-1.console.aws.amazon.com/lambda/home?region=eu-west-1#/functions/qa-google-factcheck-explorer-bot?tab=configure
-* The endpoint url from the trigger needs to be set as the '`<webhook>`' when setting the bot configuration as per instructions https://meedan.atlassian.net/wiki/spaces/ENG/pages/1126268929/How+to+configure+a+webhook+for+a+Check+Bot
+* The Lambda needs the API Gateway Trigger setup so that there is an external http endpoint that can be called. 
+* The endpoint url from the trigger needs to be set as the '`<webhook>`' when setting the bot configuration as per instructions on internal wiki `How to configure a webhook for a Check Bot`
 * Lambda timeout can be increased to 3 minutes on the configuration tab
 * Update environment (live/QA) appropriate secrets and config in Lambda's Configuration > Environment Variables section
    * `CHECK_API_GOOGLE_FACT_CHECK_ACCESS_TOKEN`  <-- this needs the key to the GoogleFactCheck feed workspace
@@ -76,7 +75,7 @@ General AWS docs on how to deploy lambdas: https://docs.aws.amazon.com/lambda/la
 * The bot needs to be authorized to write to the project media of the target team by being added as TeamBotInstalation.
 * The event structure sent by the webhook needs to match what the bot is expecting to parse out of the JSON payload, ie 
   * `bot_user.set_events = [{"event"=>"create_project_media", "graphql"=>"dbid, title, description, type"}]`
-* Logs from event hook will appear in CloudWatch, with a few minutes delay https://eu-west-1.console.aws.amazon.com/cloudwatch/home?region=eu-west-1#logsV2:log-groups/log-group/$252Faws$252Flambda$252Fqa-google-factcheck-explorer-bot
+* Logs from event hook will appear in CloudWatch, with a few minutes delay
 
 
 ## testing the bot side locally

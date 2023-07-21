@@ -33,7 +33,7 @@ class GoogleFactcheckLoader(object):
         with requests.get(self.GOOGLE_FACT_CHECK_FEED_URL, stream=True) as r:
             r.raise_for_status()
             with open(file_path, 'wb') as f:
-                for chunk in r.iter_content(chunk_size=8192): 
+                for chunk in r.iter_content(chunk_size=8192): # default chunk size from stack overflow
                     f.write(chunk)
         return file_path
 
@@ -171,7 +171,7 @@ class GoogleFactcheckLoader(object):
             # check status
 
         for claim in claim_reviews:
-            print(claim)
+            logging.info(claim)
             # extract relevant fields from claim
             # format paylod
             """ TODO: use similarity_request document model?
