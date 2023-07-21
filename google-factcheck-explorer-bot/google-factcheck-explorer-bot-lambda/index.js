@@ -125,15 +125,14 @@ exports.handler = (event, context, callback) => {
               // "published-article-url":"https://www.indiatoday.in/fact-check/story/viral-test-big-b-madhuri-dixit-campaigning-for-imran-khan-1294131-2018-07-24",
               // "organization":"Google fact check tools"}}],
               // "meta":{"record-count":1}}
-              let text = `<h6>Closely releated ClaimReviews from Google Factcheck Tools:</h6>\n`;
-              text = text + "<ul>"
+              let text = `Closely releated ClaimReviews from Google Factcheck Tools:\n`;
               for (let i=0; i<Math.min(3,json_obj["meta"]["record-count"]); i++) {
                 // extract items from claim and format text to display as comment
                 claim_title = json_obj["data"][i]["attributes"]["fact-check-title"].trim()
                 source_url = json_obj["data"][i]["attributes"]["published-article-url"]
-                text+=`<li> ${claim_title}. ${source_url}</li>\n`;
+                text+=`- ${claim_title} [${source_url}]\n`;
               }
-              text += "</ul>"
+
               // make a call back to Check with the text to be used a comments on the PM item
               replyToCheck(pmid, data.team.slug, text, callback);
             } else {
