@@ -39,6 +39,6 @@ See details in `./health-desk-bot/README.md`
 ## Local usage
 
 * Copy `config.js.example` to `config.js` and define your local configurations with `checkApiUrl: http://localhost:3000`.
-* Start Check locally
+* Start Check locally `docker-compose -f docker-compose.yml up bots`
 * The `check-bots` container should start `server.js` on port `8586`
 * On the Check side, the bot request URL should be set to `http://bots:8586/<bot-slug>` ('exif', 'youtube' or 'health-desk').
